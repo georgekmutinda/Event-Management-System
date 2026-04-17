@@ -1,0 +1,77 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: event_mgmt_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: gkyalo
+      POSTGRES_DB: eventmanagementsystemdb
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - event_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: event_mgmt_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - event_network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: event_mgmt_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - event_network
+
+  api:
+    image: gmutinda/eventmanagement-api:v1
+    container_name: event_mgmt_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=eventmanagementsystemdb;Username=postgres;Password=gkyalo
+      ConnectionStrings__Redis: redis:6379
+      RabbitMQ__HostName: rabbitmq
+      JwtSettings__Key: sY3kPq9mL2vW7jX5nB8rT0cD4fG1hE6aZ3mK9pL2qN7sT0vW3yZ5bC8dE1fG4hJ6lMnO
+      JwtSettings__Issuer: EventManagementAPI
+      JwtSettings__Audience: EventManagementUsers
+    ports:
+      - "5100:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - event_network
+
+networks:
+  event_network:
+    driver: bridge

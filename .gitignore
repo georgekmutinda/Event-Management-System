@@ -1,0 +1,110 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options directory
+.vs/
+
+# Visual Studio Code
+.vscode/
+.vscode-settings.json
+*.code-workspace
+
+# Rider
+.idea/
+.idea_modules/
+*.sln.iml
+*.swp
+*.swo
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+
+# Packages directory
+packages/
+paket-files/
+.paket/paket.exe
+paket-files/
+
+# Local development settings (SENSITIVE)
+appsettings.Development.json
+appsettings.Production.json
+.env
+.env.local
+.env.*.local
+user-secrets/
+
+# Docker compose local overrides
+docker-compose.override.yml
+
+# Node modules (if any frontend)
+node_modules/
+dist/
+build/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Testing
+TestResults/
+coverage/
+*.coverage
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# Certificate files (if any)
+*.pfx
+*.pem
+*.key
+*.crt
+
+# Miscellaneous
+*.log
+*.tmp
+.directory
+.project
+.classpath
+
+# Database files (if using local SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+*.vscode
+.vscode-settings.json
+
+# Git files
+.gitattributes

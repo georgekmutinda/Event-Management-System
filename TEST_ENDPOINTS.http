@@ -1,0 +1,204 @@
+;j### EventManagementSystem API - Comprehensive Testing
+
+# ========================================
+# 1. SETUP: Create Test Users
+# ========================================
+
+### Create User 1 (Vendor Owner)
+POST http://localhost:5100/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Catering Company",
+  "email": "catering@vendor.com",
+  "password": "TestPassword123!",
+  "roles": ["Vendor"]
+}
+
+### Create User 2 (Event Attendee 1)
+POST http://localhost:5100/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "John Attendee",
+  "email": "john@attendee.com",
+  "password": "TestPassword123!",
+  "roles": ["User"]
+}
+
+### Create User 3 (Event Attendee 2)
+POST http://localhost:5100/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Jane Attendee",
+  "email": "jane@attendee.com",
+  "password": "TestPassword123!",
+  "roles": ["User"]
+}
+
+### Create User 4 (Event Planner)
+POST http://localhost:5100/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Event Planner",
+  "email": "planner@event.com",
+  "password": "TestPassword123!",
+  "roles": ["EventPlanner"]
+}
+
+# ========================================
+# 2. GET ALL USERS (to get IDs for next steps)
+# ========================================
+
+### Get All Users
+GET http://localhost:5100/api/users
+Content-Type: application/json
+
+# ========================================
+# 3. VENDOR ENDPOINTS Testing
+# ========================================
+
+### Create Vendor (VendorId=1, UserId=1)
+POST http://localhost:5100/api/vendors
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "businessName": "First Class Catering",
+  "productType": "Catering",
+  "description": "Premium catering services for all events"
+}
+
+### Get All Vendors
+GET http://localhost:5100/api/vendors
+Content-Type: application/json
+
+### Get Vendor by ID (VendorId=1)
+GET http://localhost:5100/api/vendors/1
+Content-Type: application/json
+
+### Update Vendor (VendorId=1)
+PUT http://localhost:5100/api/vendors/1
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "businessName": "Deluxe Catering Services",
+  "productType": "Catering & Events",
+  "description": "Premium catering and event management services"
+}
+
+### Get Vendor After Update
+GET http://localhost:5100/api/vendors/1
+Content-Type: application/json
+
+# ========================================
+# 4. EVENT ENDPOINTS (should exist already)
+# ========================================
+
+### Get All Events (to find EventId, should be 1)
+GET http://localhost:5100/api/events
+Content-Type: application/json
+
+# ========================================
+# 5. EVENT REGISTRATION ENDPOINTS Testing
+# ========================================
+
+### Register User 2 for Event 1
+POST http://localhost:5100/api/event-registrations
+Content-Type: application/json
+
+{
+  "eventId": 1,
+  "attendeeId": 2
+}
+
+### Get All Registrations
+GET http://localhost:5100/api/event-registrations
+Content-Type: application/json
+
+### Get Registration by ID (RegistrationId=1)
+GET http://localhost:5100/api/event-registrations/1
+Content-Type: application/json
+
+### Attempt Duplicate Registration (should FAIL)
+POST http://localhost:5100/api/event-registrations
+Content-Type: application/json
+
+{
+  "eventId": 1,
+  "attendeeId": 2
+}
+
+### Register Different User (User 3) for Event 1 (should succeed - different user)
+POST http://localhost:5100/api/event-registrations
+Content-Type: application/json
+
+{
+  "eventId": 1,
+  "attendeeId": 3
+}
+
+# ========================================
+# 6. EVENT VENDOR ENDPOINTS Testing
+# ========================================
+
+### Link Vendor 1 to Event 1
+POST http://localhost:5100/api/event-vendors
+Content-Type: application/json
+
+{
+  "eventId": 1,
+  "vendorId": 1
+}
+
+### Get All Event-Vendor Associations
+GET http://localhost:5100/api/event-vendors
+Content-Type: application/json
+
+### Attempt Duplicate Link (should FAIL)
+POST http://localhost:5100/api/event-vendors
+Content-Type: application/json
+
+{
+  "eventId": 1,
+  "vendorId": 1
+}
+
+# ========================================
+# 7. CLEANUP: Delete Records
+# ========================================
+
+### Delete Event-Vendor Link (EventVendorId=1)
+DELETE http://localhost:5100/api/event-vendors/1
+Content-Type: application/json
+
+### Delete Registration (RegistrationId=1)
+DELETE http://localhost:5100/api/event-registrations/1
+Content-Type: application/json
+
+### Delete Registration (RegistrationId=2)
+DELETE http://localhost:5100/api/event-registrations/2
+Content-Type: application/json
+
+### Delete Vendor (VendorId=1)
+DELETE http://localhost:5100/api/vendors/1
+Content-Type: application/json
+
+### Verify Vendor Deleted (should return 404)
+GET http://localhost:5100/api/vendors/1
+Content-Type: application/json
+
+### Get All Vendors (should be empty)
+GET http://localhost:5100/api/vendors
+Content-Type: application/json
+
+### Get All Registrations (should be empty)
+GET http://localhost:5100/api/event-registrations
+Content-Type: application/json
+
+### Get All Event-Vendor Links (should be empty)
+GET http://localhost:5100/api/event-vendors
+Content-Type: application/json
