@@ -1,0 +1,85 @@
+/* ═══════════════════════════════════════
+   base.css — CSS Variables & Reset
+═══════════════════════════════════════ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Gold Palette */
+  --gold:        #C9A84C;
+  --gold-light:  #E8CC7A;
+  --gold-pale:   #F7EFD4;
+  --gold-dark:   #8B6914;
+
+  /* Ink / Dark */
+  --ink:         #0D0D0D;
+  --ink-2:       #1A1A1A;
+  --ink-3:       #2C2C2C;
+
+  /* Cream / Light */
+  --cream:       #FAF8F3;
+  --cream-2:     #F2EDE0;
+  --cream-3:     #E8E0CC;
+  --white:       #FFFFFF;
+
+  /* Text */
+  --muted:       #8A8070;
+  --muted-2:     #BFB89E;
+
+  /* Semantic */
+  --danger:      #C0392B;
+  --success:     #1A6B3C;
+
+  /* Layout */
+  --sidebar-w:   260px;
+  --header-h:    68px;
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Jost', sans-serif;
+
+  /* Shape */
+  --radius:      12px;
+  --radius-sm:   8px;
+  --radius-xs:   4px;
+
+  /* Elevation */
+  --shadow:      0 4px 32px rgba(13, 13, 13, 0.08);
+  --shadow-md:   0 8px 48px rgba(13, 13, 13, 0.14);
+
+  /* Motion */
+  --trans:       0.2s ease;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: var(--font-body);
+}
