@@ -166,7 +166,7 @@ function handleApiError(status, data) {
 /**
  * Restore auth token from localStorage (called on page load)
  */
-function restoreAuthToken() {
+async function restoreAuthToken() {
   authToken = localStorage.getItem('auth_token');
   const userJson = localStorage.getItem('current_user');
   if (userJson) {
@@ -178,6 +178,14 @@ function restoreAuthToken() {
   }
   // If token exists, skip auth page
   if (authToken && currentUser) {
+    if (!Number.isInteger(currentUser.userId) && currentUser.email) {
+      try {
+        await loadCurrentUser(currentUser.email);
+      } catch (err) {
+        // If user lookup fails, continue with existing user object.
+      }
+    }
+
     document.getElementById('auth-page').style.display = 'none';
     document.getElementById('app-page').style.display = 'block';
     showView('dashboard');
@@ -200,9 +208,9 @@ async function loadCurrentUser(email) {
     };
   } catch (err) {
     // Fallback: use email as basis for user object
-    // This allows testing even if user service has issues
+    // Do not assign a fake planner ID, because planner validation happens on the backend.
     currentUser = {
-      userId: 1, // Fallback ID
+      userId: null,
       fullName: email.split('@')[0],
       email: email,
     };
@@ -223,14 +231,17 @@ async function loginUser(email, password) {
   authToken = response.token;
   localStorage.setItem('auth_token', authToken);
 
-  // Create user object from email (simplified approach)
-  // Use the username (part before @) as fullName fallback
-  currentUser = {
-    userId: Math.random().toString(36).substr(2, 9), // Temporary ID
-    fullName: email.split('@')[0],
-    email: email,
-  };
-  localStorage.setItem('current_user', JSON.stringify(currentUser));
+  try {
+    await loadCurrentUser(email);
+  } catch (err) {
+    // If the user endpoint fails, preserve the email but keep plannerId invalid.
+    currentUser = {
+      userId: null,
+      fullName: email.split('@')[0],
+      email: email,
+    };
+    localStorage.setItem('current_user', JSON.stringify(currentUser));
+  }
 }
 
 /* ─────────────────────────────────────
@@ -603,12 +614,17 @@ async function saveEvent() {
     return false;
   }
 
+  if (!currentUser || !Number.isInteger(Number(currentUser.userId))) {
+    showToast('🔐 Could not determine your user ID. Please log out and log back in.', 4000);
+    return false;
+  }
+
   const payload = {
     title,
     description,
     location,
     eventDate: new Date(eventDate).toISOString(),
-    plannerId: currentUser?.userId || 1, // Fallback
+    plannerId: Number(currentUser.userId),
   };
 
   // Determine if this is a create or update
@@ -846,7 +862,7 @@ function showToast(msg, duration = 3000) {
 /* ─────────────────────────────────────
    INIT — restore auth and render on page load
 ───────────────────────────────────── */
-(function init() {
+(async function init() {
   // Pre-render dashboard template so it's ready when enterApp() is called
   const dashContainer = document.getElementById('view-dashboard');
   if (dashContainer && VIEW_TEMPLATES.dashboard) {
@@ -854,7 +870,7 @@ function showToast(msg, duration = 3000) {
   }
 
   // Restore previous session if available
-  restoreAuthToken();
+  await restoreAuthToken();
 
   // Load events if authenticated
   if (authToken) {

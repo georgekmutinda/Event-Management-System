@@ -6,7 +6,7 @@ namespace Domain.Entities
     /// Naming Convention Applied:
     /// - Class Name: Singular (EventVendor)
     /// - FK Reference Properties: Singular (Event, Vendor - both reference single entities)
-    /// </summary>
+/// </summary>
     public class EventVendor
     {
         public int EventVendorId { get; set; }
