@@ -108,3 +108,5 @@ BenchmarkDotNet.Artifacts/
 
 # Git files
 .gitattributes
+
+.fake

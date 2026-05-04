@@ -30,15 +30,15 @@
       <div id="login-form">
         <div class="auth-field">
           <label>Email Address</label>
-          <input type="email" placeholder="you@company.com">
+          <input id="login-email" type="email" placeholder="you@company.com">
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" placeholder="••••••••••">
+          <input id="login-password" type="password" placeholder="••••••••••">
         </div>
         <button class="auth-btn" onclick="enterApp()">Sign In to Platform</button>
         <div class="auth-divider">or continue as</div>
-        <button class="auth-alt-link" onclick="enterApp()">Continue as Guest → Demo</button>
+        <button class="auth-alt-link" onclick="continueAsGuest()">Continue as Guest → Demo</button>
       </div>
 
       <!-- REGISTER -->
@@ -46,28 +46,28 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="auth-field">
             <label>First Name</label>
-            <input type="text" placeholder="Alexandra">
+            <input id="register-first-name" type="text" placeholder="Alexandra">
           </div>
           <div class="auth-field">
             <label>Last Name</label>
-            <input type="text" placeholder="Rothbury">
+            <input id="register-last-name" type="text" placeholder="Rothbury">
           </div>
         </div>
         <div class="auth-field">
           <label>Email Address</label>
-          <input type="email" placeholder="you@company.com">
+          <input id="register-email" type="email" placeholder="you@company.com">
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" placeholder="Min 8 characters">
+          <input id="register-password" type="password" placeholder="Min 8 characters">
         </div>
         <div class="auth-field">
           <label>Role</label>
-          <select class="auth-select">
-            <option>Event Organiser</option>
+          <select id="register-role" class="auth-select">
+            <option>Planner</option>
             <option>Vendor</option>
-            <option>Service Provider</option>
-            <option>Administrator</option>
+            <option>ServiceProvider</option>
+            <option>Attendee</option>
           </select>
         </div>
         <button class="auth-btn" onclick="enterApp()">Create My Account</button>
@@ -197,15 +197,15 @@
       </div>
       <div class="modal-body" id="modal-body">
         <div class="form-row">
-          <div class="form-group"><label>Event Name</label><input class="form-control" type="text" placeholder="e.g. Annual Tech Summit 2027"></div>
-          <div class="form-group"><label>Event Date</label><input class="form-control" type="date"></div>
+          <div class="form-group"><label>Event Name</label><input id="form-event-name" class="form-control" type="text" placeholder="e.g. Annual Tech Summit 2027"></div>
+          <div class="form-group"><label>Event Date</label><input id="form-event-date" class="form-control" type="date"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Venue</label><input class="form-control" placeholder="e.g. KICC, Nairobi"></div>
+          <div class="form-group"><label>Location</label><input id="form-event-location" class="form-control" placeholder="e.g. KICC, Nairobi"></div>
           <div class="form-group"><label>Capacity</label><input class="form-control" type="number" placeholder="500"></div>
         </div>
         <div class="form-row full">
-          <div class="form-group"><label>Description</label><textarea class="form-control" rows="3" placeholder="Brief event description…"></textarea></div>
+          <div class="form-group"><label>Description</label><textarea id="form-event-description" class="form-control" rows="3" placeholder="Brief event description…"></textarea></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Status</label>

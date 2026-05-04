@@ -18,6 +18,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// --- 1.5. CORS for frontend integration ---
+builder.Services.AddCors(options => {
+    options.AddPolicy("LocalDev", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 // --- 2. Database (Postgres) ---
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -111,9 +119,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// Ensure the app listens on port 8080 (Matches Docker container port)
-app.Urls.Add("http://0.0.0");
+// Ensure the app listens on port 5100 (for local development)
+app.Urls.Add("http://0.0.0:5100");
 
+app.UseCors("LocalDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

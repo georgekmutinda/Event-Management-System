@@ -122,50 +122,8 @@ const VIEW_TEMPLATES = {
         <button class="topbar-btn btn-primary" onclick="openCreateModal()">+ New Event</button>
       </div>
     </div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr><th>Event Name</th><th>Date</th><th>Venue</th><th>Registrations</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Nairobi Tech Summit 2026</strong></td>
-            <td>May 24, 2026</td><td>KICC, Nairobi</td><td>340 / 500</td>
-            <td><span class="badge badge-green">Published</span></td>
-            <td>
-              <button class="topbar-btn btn-ghost" style="padding:6px 14px;font-size:11px">Edit</button>
-              <button class="btn-danger topbar-btn" onclick="confirmDelete('event')">Delete</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Annual Gala Dinner</strong></td>
-            <td>Jun 8, 2026</td><td>Serena Hotel</td><td>180 / 200</td>
-            <td><span class="badge badge-gold">Invite Only</span></td>
-            <td>
-              <button class="topbar-btn btn-ghost" style="padding:6px 14px;font-size:11px">Edit</button>
-              <button class="btn-danger topbar-btn" onclick="confirmDelete('event')">Delete</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>East Africa Product Launch</strong></td>
-            <td>Jul 15, 2026</td><td>Radisson Blu</td><td>92 / 300</td>
-            <td><span class="badge badge-blue">Draft</span></td>
-            <td>
-              <button class="topbar-btn btn-ghost" style="padding:6px 14px;font-size:11px">Edit</button>
-              <button class="btn-danger topbar-btn" onclick="confirmDelete('event')">Delete</button>
-            </td>
-          </tr>
-          <tr>
-            <td><strong>Wellness Retreat 2026</strong></td>
-            <td>Aug 3, 2026</td><td>Fairmont, Nakuru</td><td>55 / 120</td>
-            <td><span class="badge badge-blue">Draft</span></td>
-            <td>
-              <button class="topbar-btn btn-ghost" style="padding:6px 14px;font-size:11px">Edit</button>
-              <button class="btn-danger topbar-btn" onclick="confirmDelete('event')">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div id="events-list-container">
+      <div class="empty-state"><div class="empty-title">Loading events...</div></div>
     </div>
   `,
 
