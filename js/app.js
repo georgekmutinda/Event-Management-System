@@ -1,246 +1,265 @@
-/* ═══════════════════════════════════════
-   app.js — Main Application Logic
-   Auth · Navigation · Modals · Toast
-═══════════════════════════════════════ */
+/* Main application controller for the Eventara demo frontend. */
 
-/* ─────────────────────────────────────
-   CONFIG MAPS
-───────────────────────────────────── */
-const VIEW_TITLES = {
-  dashboard:          'Dashboard',
-  events:             'Events',
-  registrations:      'Registrations',
-  vendors:            'Vendors',
-  'event-vendors':    'Event Vendors',
-  'service-providers':'Service Providers',
-  'event-services':   'Event Services',
-  payments:           'Payments',
-  users:              'Users',
-  roles:              'Roles',
+const VENDOR_SUBMENU_ITEMS = [
+  { id: 'vendors', label: 'All Vendors' },
+  { id: 'event-vendors', label: 'Event Vendors' },
+];
+
+let currentRole = 'admin';
+let currentView = ROLE_CONFIG[currentRole].defaultView;
+let toastTimerId = null;
+const TOPBAR_ACTION_HANDLERS = {
+  'user-dashboard': () => showView('browse-events', document.querySelector('[data-view="browse-events"]')),
+  'my-payments': () => openPaymentModal('Annual Gala Dinner', 'KES 15,000'),
+  'vendor-profile': () => showToast('Profile edits are entered directly in this view.'),
+  'provider-dashboard': () => showView('my-services', document.querySelector('[data-view="my-services"]')),
+  'provider-profile': () => showToast('Profile edits are entered directly in this view.'),
 };
 
-const ACTION_LABELS = {
-  dashboard:          '+ Create Event',
-  events:             '+ New Event',
-  registrations:      '+ Register Attendee',
-  vendors:            '+ Add Vendor',
-  'event-vendors':    '+ Link Vendor',
-  'service-providers':'+ Add Provider',
-  'event-services':   '+ Link Service',
-  payments:           '+ Record Payment',
-  users:              '+ Invite User',
-  roles:              '+ Create Role',
-};
-
-const MODAL_TITLES = {
-  dashboard:          'Create New Event',
-  events:             'Create New Event',
-  registrations:      'Register Attendee',
-  vendors:            'Add Vendor',
-  'event-vendors':    'Link Vendor to Event',
-  'service-providers':'Add Service Provider',
-  'event-services':   'Link Service to Event',
-  payments:           'Record Payment',
-  users:              'Invite User',
-  roles:              'Create Role',
-};
-
-/* ─────────────────────────────────────
-   STATE
-───────────────────────────────────── */
-let currentView = 'dashboard';
-
-/* ─────────────────────────────────────
-   AUTH
-───────────────────────────────────── */
-
-/**
- * Toggle between login and register tabs on the auth page.
- * @param {'login'|'register'} tab
- * @param {HTMLElement} el - the clicked tab button
- */
 function switchAuthTab(tab, el) {
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('login-form').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((node) => node.classList.remove('active'));
+  if (el) {
+    el.classList.add('active');
+  }
+
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
 }
 
-/**
- * Transition from auth page into the main app.
- * In production this would validate credentials via POST /api/auth/login
- * or POST /api/auth/register before proceeding.
- */
-function enterApp() {
-  document.getElementById('auth-page').style.display = 'none';
-  document.getElementById('app-page').style.display  = 'block';
+function selectRole(role, el) {
+  if (!ROLE_CONFIG[role]) {
+    return;
+  }
 
-  // Render the default dashboard view on first load
-  renderView('dashboard');
-  showToast('Welcome back, Alexandra ✦');
+  currentRole = role;
+  document.querySelectorAll('.role-option').forEach((node) => node.classList.remove('selected'));
+  if (el) {
+    el.classList.add('selected');
+  } else {
+    const roleOption = document.getElementById(`role-${role}`);
+    if (roleOption) {
+      roleOption.classList.add('selected');
+    }
+  }
+
+  const registerRole = document.getElementById('register-role');
+  if (registerRole && registerRole.value !== role) {
+    registerRole.value = role;
+  }
+
+  if (document.getElementById('app-page').style.display === 'block') {
+    applyRoleChrome();
+  }
 }
 
-/**
- * Sign the user out and return to the auth page.
- */
+function syncRegisterRole(role) {
+  selectRole(role, null);
+}
+
+function enterApp() {
+  document.getElementById('auth-page').style.display = 'none';
+  document.getElementById('app-page').style.display = 'block';
+
+  applyRoleChrome();
+  showView(ROLE_CONFIG[currentRole].defaultView, null);
+  showToast(`Welcome back, ${ROLE_CONFIG[currentRole].name}`);
+}
+
 function logout() {
-  document.getElementById('app-page').style.display  = 'none';
+  closeModal(null);
+  closeDeleteModal(null);
+  closePaymentModal(null);
+
+  document.getElementById('app-page').style.display = 'none';
   document.getElementById('auth-page').style.display = 'flex';
   showToast('Signed out successfully');
 }
 
-/* ─────────────────────────────────────
-   NAVIGATION
-───────────────────────────────────── */
+function applyRoleChrome() {
+  const roleConfig = ROLE_CONFIG[currentRole];
+  const roleBadge = document.getElementById('sidebar-role-badge');
+  const displayName = document.getElementById('user-display-name');
+  const displayRole = document.getElementById('user-display-role');
+  const avatar = document.getElementById('user-avatar-initials');
 
-/**
- * Render a view's HTML template into its container and
- * update the topbar title, breadcrumb, and primary action button.
- * @param {string} id - view key (e.g. 'events', 'vendors')
- * @param {HTMLElement|null} navEl - the clicked nav item (to mark active)
- */
-function showView(id, navEl) {
-  // Swap active view
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  roleBadge.className = `sidebar-role-badge ${roleConfig.badgeClass}`;
+  roleBadge.textContent = roleConfig.label;
+  displayName.textContent = roleConfig.name;
+  displayRole.textContent = roleConfig.label;
+  avatar.textContent = roleConfig.initials;
 
-  const container = document.getElementById('view-' + id);
-  if (!container) return;
+  buildSidebar(roleConfig);
+}
 
-  // Inject template if not already rendered
-  if (container.innerHTML.trim() === '') {
-    container.innerHTML = VIEW_TEMPLATES[id] || '<div class="empty-state"><div class="empty-title">Coming soon</div></div>';
+function buildSidebar(roleConfig) {
+  const sidebarNav = document.getElementById('sidebar-nav');
+  const sectionsHtml = roleConfig.navSections.map((section) => {
+    const itemsHtml = section.items.map((item) => buildNavItem(item)).join('');
+    return `
+      <div class="sidebar-section">${section.title}</div>
+      ${itemsHtml}
+    `;
+  }).join('');
+
+  sidebarNav.innerHTML = sectionsHtml;
+}
+
+function buildNavItem(item) {
+  const badgeHtml = item.badge ? `<span class="nav-badge">${item.badge}</span>` : '';
+  const iconHtml = buildIcon(item.icon);
+
+  if (item.hasSubmenu) {
+    const submenuHtml = VENDOR_SUBMENU_ITEMS.map((subItem) => `
+      <div class="nav-sub-item" data-view="${subItem.id}" onclick="showView('${subItem.id}', this)">
+        ${subItem.label}
+      </div>
+    `).join('');
+
+    return `
+      <div class="nav-item" data-view="${item.id}" onclick="toggleVendorMenu(this)">
+        ${iconHtml}
+        <span>${item.label}</span>
+        ${badgeHtml}
+        <span id="vendor-arrow" style="margin-left:auto;transition:transform 0.2s">+</span>
+      </div>
+      <div class="vendor-nav-sub" id="vendor-sub">
+        ${submenuHtml}
+      </div>
+    `;
   }
 
-  container.classList.add('active');
-  if (navEl) navEl.classList.add('active');
+  return `
+    <div class="nav-item" data-view="${item.id}" onclick="showView('${item.id}', this)">
+      ${iconHtml}
+      <span>${item.label}</span>
+      ${badgeHtml}
+    </div>
+  `;
+}
 
-  // Update topbar
-  document.getElementById('page-title').textContent   = VIEW_TITLES[id]  || id;
-  document.getElementById('bc-cur').textContent        = VIEW_TITLES[id]  || id;
-  document.getElementById('topbar-action').textContent = ACTION_LABELS[id] || '+ Create';
+function buildIcon(iconName) {
+  const paths = ICONS[iconName] || '';
+  return `
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      ${paths}
+    </svg>
+  `;
+}
+
+function showView(id, navEl) {
+  const template = getViewTemplate(id);
+  const content = document.getElementById('main-content');
+  const title = VIEW_TITLES[id] || 'Dashboard';
+  const actionLabel = ACTION_LABELS[id] ?? '+ Create';
+  const actionButton = document.getElementById('topbar-action');
 
   currentView = id;
 
-  // Auto-expand vendor submenu when a vendor view is active
+  content.innerHTML = `
+    <div class="view active" id="view-${id}">
+      ${template || '<div class="empty-state"><div class="empty-title">Coming soon</div></div>'}
+    </div>
+  `;
+
+  document.querySelectorAll('.nav-item, .nav-sub-item').forEach((node) => node.classList.remove('active'));
+  const activeNode = navEl || document.querySelector(`[data-view="${id}"]`);
+  if (activeNode) {
+    activeNode.classList.add('active');
+  }
+
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('bc-cur').textContent = title;
+
+  actionButton.textContent = actionLabel;
+  actionButton.style.display = actionLabel ? 'inline-flex' : 'none';
+
   if (id === 'vendors' || id === 'event-vendors') {
     openVendorMenu();
-  }
-}
-
-/**
- * Toggle the vendors collapsible sub-menu.
- * @param {HTMLElement} el - the parent nav item
- */
-function toggleVendorMenu(el) {
-  const sub   = document.getElementById('vendor-sub');
-  const arrow = document.getElementById('vendor-arrow');
-  const isOpen = sub.classList.contains('open');
-
-  if (isOpen) {
-    sub.classList.remove('open');
-    arrow.style.transform = 'rotate(0deg)';
   } else {
-    openVendorMenu();
-    showView('vendors', null);
+    closeVendorMenu();
   }
 }
 
-/** Open (expand) the vendor sub-menu without toggling. */
+function handleTopbarAction() {
+  const modalFormAvailable = typeof MODAL_FORMS !== 'undefined' && Boolean(MODAL_FORMS[currentView]);
+  const handler = TOPBAR_ACTION_HANDLERS[currentView];
+
+  if (typeof handler === 'function') {
+    handler();
+    return;
+  }
+
+  if (modalFormAvailable) {
+    openCreateModal();
+    return;
+  }
+
+  showToast('This screen uses the inline actions shown in the content area.');
+}
+
+function toggleVendorMenu() {
+  const vendorSub = document.getElementById('vendor-sub');
+  if (!vendorSub) {
+    return;
+  }
+
+  if (vendorSub.classList.contains('open')) {
+    closeVendorMenu();
+    return;
+  }
+
+  openVendorMenu();
+  if (currentView !== 'vendors' && currentView !== 'event-vendors') {
+    showView('vendors', document.querySelector('[data-view="vendors"]'));
+  }
+}
+
 function openVendorMenu() {
-  document.getElementById('vendor-sub').classList.add('open');
-  document.getElementById('vendor-arrow').style.transform = 'rotate(180deg)';
-}
+  const vendorSub = document.getElementById('vendor-sub');
+  const vendorArrow = document.getElementById('vendor-arrow');
 
-/* ─────────────────────────────────────
-   MODALS
-───────────────────────────────────── */
+  if (vendorSub) {
+    vendorSub.classList.add('open');
+  }
 
-/** Open the create/edit modal, contextual to the current view. */
-function openCreateModal() {
-  document.getElementById('modal-title').textContent = MODAL_TITLES[currentView] || 'Create';
-  document.getElementById('modal-backdrop').classList.add('open');
-}
-
-/**
- * Close the create modal.
- * @param {MouseEvent|null} e - pass null to close unconditionally;
- *   pass the event to close only when the backdrop itself is clicked.
- */
-function closeModal(e) {
-  if (!e || e.target === document.getElementById('modal-backdrop')) {
-    document.getElementById('modal-backdrop').classList.remove('open');
+  if (vendorArrow) {
+    vendorArrow.textContent = '-';
   }
 }
 
-/** Save the form and close the modal (stub — wire to your API calls). */
-function saveAndClose() {
-  // TODO: collect form data and call the appropriate endpoint, e.g.:
-  //   POST /api/events            for events
-  //   POST /api/vendors           for vendors
-  //   POST /api/event-registrations for registrations
-  //   etc.
-  document.getElementById('modal-backdrop').classList.remove('open');
-  showToast('Record saved successfully ✦');
-}
+function closeVendorMenu() {
+  const vendorSub = document.getElementById('vendor-sub');
+  const vendorArrow = document.getElementById('vendor-arrow');
 
-/* ─────────────────────────────────────
-   DELETE MODAL
-───────────────────────────────────── */
+  if (vendorSub) {
+    vendorSub.classList.remove('open');
+  }
 
-/**
- * Show the delete confirmation modal.
- * @param {string} type - record type label for logging (e.g. 'event', 'vendor')
- */
-function confirmDelete(type) {
-  document.getElementById('delete-modal').classList.add('open');
-}
-
-/**
- * Close the delete modal.
- * @param {MouseEvent|null} e
- */
-function closeDeleteModal(e) {
-  if (!e || e.target === document.getElementById('delete-modal')) {
-    document.getElementById('delete-modal').classList.remove('open');
+  if (vendorArrow) {
+    vendorArrow.textContent = '+';
   }
 }
 
-/** Execute the delete action (stub — wire to your DELETE endpoints). */
-function doDelete() {
-  // TODO: call the appropriate endpoint, e.g.:
-  //   DELETE /api/events/{id}
-  //   DELETE /api/vendors/{id}
-  //   DELETE /api/roles/{id}
-  //   etc.
-  document.getElementById('delete-modal').classList.remove('open');
-  showToast('Record deleted permanently');
-}
-
-/* ─────────────────────────────────────
-   TOAST
-───────────────────────────────────── */
-
-/**
- * Show a temporary notification toast.
- * @param {string} msg - message to display
- * @param {number} [duration=3000] - milliseconds before auto-hide
- */
-function showToast(msg, duration = 3000) {
+function showToast(message, duration = 3000) {
   const toast = document.getElementById('toast');
-  toast.textContent = msg;
+  if (!toast) {
+    return;
+  }
+
+  if (toastTimerId) {
+    clearTimeout(toastTimerId);
+  }
+
+  toast.textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), duration);
+  toastTimerId = setTimeout(() => {
+    toast.classList.remove('show');
+    toastTimerId = null;
+  }, duration);
 }
 
-/* ─────────────────────────────────────
-   INIT — render dashboard on page load
-   (only runs if the app page is already visible)
-───────────────────────────────────── */
 (function init() {
-  // Pre-render dashboard template so it's ready when enterApp() is called
-  const dashContainer = document.getElementById('view-dashboard');
-  if (dashContainer && VIEW_TEMPLATES.dashboard) {
-    dashContainer.innerHTML = VIEW_TEMPLATES.dashboard;
-  }
+  selectRole(currentRole, document.getElementById(`role-${currentRole}`));
+  document.getElementById('auth-page').style.display = 'flex';
+  document.getElementById('app-page').style.display = 'none';
 })();
