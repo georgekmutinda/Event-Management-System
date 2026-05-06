@@ -28,6 +28,7 @@ namespace Domain.Data
         public DbSet<ServiceProviderProfile> ServiceProviderProfile { get; set; }
 
         public DbSet<Payment> Payment { get; set; }
+        public DbSet<Invitation> Invitation { get; set; }
 
         // =========================
         // MODEL CONFIGURATION
@@ -205,6 +206,26 @@ namespace Domain.Data
                 .HasOne(p => p.Event)
                 .WithMany(e => e.Payments)
                 .HasForeignKey(p => p.EventId);
+
+            // =========================
+            // INVITATION
+            // =========================
+            modelBuilder.Entity<Invitation>()
+                .ToTable("Invitation");
+
+            modelBuilder.Entity<Invitation>()
+                .HasKey(i => i.InvitationId);
+
+            modelBuilder.Entity<Invitation>()
+                .HasOne(i => i.Event)
+                .WithMany()
+                .HasForeignKey(i => i.EventId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<Invitation>()
+                .HasOne(i => i.InvitedByUser)
+                .WithMany()
+                .HasForeignKey(i => i.InvitedByUserId);
         }
         
     }

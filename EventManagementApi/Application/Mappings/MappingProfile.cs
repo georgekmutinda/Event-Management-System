@@ -108,6 +108,13 @@ namespace Application.Mappings
 
             // CreatePaymentDto → Payment
             CreateMap<CreatePaymentDto, Payment>();
+
+            // =========================
+            // INVITATION MAPPINGS
+            // =========================
+
+            CreateMap<Invitation, InvitationResponseDto>();
+            CreateMap<CreateInvitationDto, Invitation>();
         }
     }
 }

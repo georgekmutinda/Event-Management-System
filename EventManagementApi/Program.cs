@@ -53,6 +53,8 @@ builder.Services.AddScoped<IEventServiceService, EventServiceService>();
 builder.Services.AddScoped<IEventServiceRepository, EventServiceRepository>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IInvitationService, InvitationService>();
+builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
 builder.Services.AddScoped<JwtTokenService>();
 
 // --- 4. Messaging & Cache (RabbitMQ & Redis) ---
