@@ -1,0 +1,156 @@
+/* ═══════════════════════════════════════
+   payment.css — Payment Module Styles
+═══════════════════════════════════════ */
+
+/* ═══ PAYMENT SUMMARY BANNER ═══ */
+.payment-summary {
+  background: linear-gradient(135deg, var(--panel) 0%, rgba(191, 184, 158, 0.05) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+}
+
+.pay-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.pay-amount {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+
+.pay-stats            { display: flex; gap: 40px; }
+.pay-stat-label       { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.pay-stat-paid        { font-size: 18px; font-family: 'Cormorant Garamond', serif; color: #7EC4A0; }
+.pay-stat-pending     { font-size: 18px; font-family: 'Cormorant Garamond', serif; color: var(--gold); }
+
+/* ═══ PAYMENT MODAL ═══ */
+.pay-modal { width: 520px; }
+
+/* ── Method tab strip ── */
+.pay-method-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.pay-method-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.pay-method-tab.active {
+  background: var(--panel);
+  color: var(--gold);
+}
+
+/* ── Method panels ── */
+.pay-method-panel          { display: none; }
+.pay-method-panel.active   { display: block; }
+
+/* ── M-Pesa panel ── */
+.mpesa-logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00a651;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.mpesa-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+
+/* ── Card panel ── */
+.card-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── Bank Transfer panel ── */
+.bank-code {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.bank-code-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.bank-code-val {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  color: var(--gold);
+}
+
+/* ── Order summary box ── */
+.pay-summary-box {
+  background: rgba(191, 184, 158, 0.06);
+  border: 1px solid rgba(191, 184, 158, 0.15);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.pay-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.pay-summary-row:last-child { margin-bottom: 0; }
+.pay-summary-row .label     { color: var(--muted); }
+.pay-summary-total {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--gold);
+}
+
+/* ── Primary pay button ── */
+.pay-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--gold);
+  color: #0D0C0B;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pay-btn:hover {
+  background: var(--gold-lit);
+  transform: translateY(-1px);
+}
