@@ -1,60 +1,136 @@
 /* ═══════════════════════════════════════
-   config.js — Role Config, Icon Map,
-   View Title & Action Label Maps
+   config.js — Eventara Configuration
+   API base, JWT claims, role config,
+   icons, view titles, action labels.
 ═══════════════════════════════════════ */
+
+// nginx proxies /api/ → api:5100  — never use localhost here
+const API_BASE_URL = 'http://localhost:5100/api';
+
+// JWT claim keys (as they appear after atob decode)
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+const NAME_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+const EMAIL_CLAIM = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress';
 
 /* ─────────────────────────────────────
    ROLE CONFIGURATION
-   Each role defines the user persona,
-   sidebar nav sections, and default view.
+   Keys match exact RoleName values from
+   the database: Admin, Planner, Vendor,
+   ServiceProvider, Attendee
 ───────────────────────────────────── */
 const ROLE_CONFIG = {
-  admin: {
-    label:      'Administrator',
-    badgeClass: 'role-admin',
-    name:       'Alexandra R.',
-    initials:   'AR',
+  Admin: {
+    label:       'Administrator',
+    badgeClass:  'role-admin',
+    defaultView: 'dashboard',
     navSections: [
       {
         title: 'Main',
         items: [
-          { id: 'dashboard',      label: 'Dashboard',      icon: 'grid' },
-          { id: 'events',         label: 'Events',          icon: 'calendar' },
-          { id: 'registrations',  label: 'Registrations',   icon: 'users', badge: '12' },
+          { id: 'dashboard', label: 'Dashboard',         icon: 'grid'        },
+          { id: 'events',    label: 'Events',             icon: 'calendar'    },
+          { id: 'users',     label: 'Users',              icon: 'users'       },
+          { id: 'payments',  label: 'Payments',           icon: 'credit-card' },
         ]
       },
       {
         title: 'Vendors & Services',
         items: [
-          { id: 'vendors',           label: 'Vendors',           icon: 'home', hasSubmenu: true },
-          { id: 'service-providers', label: 'Service Providers',  icon: 'tool' },
-          { id: 'event-services',    label: 'Event Services',     icon: 'clipboard' },
+          { id: 'vendors',           label: 'Vendors',           icon: 'home',      hasSubmenu: true },
+          { id: 'service-providers', label: 'Service Providers', icon: 'tool'       },
+          { id: 'event-services',    label: 'Event Services',    icon: 'clipboard'  },
         ]
       },
       {
-        title: 'Finance & Admin',
+        title: 'Reports & Admin',
         items: [
-          { id: 'payments', label: 'Payments', icon: 'credit-card' },
-          { id: 'users',    label: 'Users',    icon: 'user' },
-          { id: 'roles',    label: 'Roles',    icon: 'shield' },
+          { id: 'roles',    label: 'Roles',    icon: 'shield'      },
         ]
       }
-    ],
-    defaultView: 'dashboard'
+    ]
   },
 
-  user: {
-    label:      'Event User',
-    badgeClass: 'role-user',
-    name:       'James M.',
-    initials:   'JM',
+  Planner: {
+    label:       'Planner',
+    badgeClass:  'role-planner',
+    defaultView: 'dashboard',
+    navSections: [
+      {
+        title: 'Events',
+        items: [
+          { id: 'dashboard',    label: 'Overview',       icon: 'grid'     },
+          { id: 'events',       label: 'My Events',      icon: 'calendar' },
+          { id: 'registrations',label: 'Registrations',  icon: 'users'    },
+          { id: 'payments',     label: 'Payments',       icon: 'credit-card' },
+        ]
+      },
+      {
+        title: 'Manage',
+        items: [
+          { id: 'vendors',           label: 'Vendors',           icon: 'home',     hasSubmenu: true },
+          { id: 'service-providers', label: 'Service Providers', icon: 'tool'      },
+          { id: 'event-services',    label: 'Event Services',    icon: 'clipboard' },
+        ]
+      }
+    ]
+  },
+
+  Vendor: {
+    label:       'Vendor',
+    badgeClass:  'role-vendor',
+    defaultView: 'vendor-dashboard',
+    navSections: [
+      {
+        title: 'Vendor Portal',
+        items: [
+          { id: 'vendor-dashboard', label: 'My Dashboard',      icon: 'grid'        },
+          { id: 'my-assignments',   label: 'Event Assignments',  icon: 'calendar'    },
+          { id: 'vendor-profile',   label: 'Vendor Profile',     icon: 'home'        },
+        ]
+      },
+      {
+        title: 'Finance',
+        items: [
+          { id: 'vendor-invoices', label: 'Invoices & Quotes', icon: 'clipboard'  },
+          { id: 'vendor-payments', label: 'Payment Tracking',  icon: 'credit-card' },
+        ]
+      }
+    ]
+  },
+
+  ServiceProvider: {
+    label:       'Service Provider',
+    badgeClass:  'role-provider',
+    defaultView: 'provider-dashboard',
+    navSections: [
+      {
+        title: 'Provider Portal',
+        items: [
+          { id: 'provider-dashboard', label: 'My Dashboard',      icon: 'grid'     },
+          { id: 'my-services',        label: 'Assigned Services',  icon: 'tool'     },
+          { id: 'provider-profile',   label: 'Provider Profile',   icon: 'user'     },
+        ]
+      },
+      {
+        title: 'Finance',
+        items: [
+          { id: 'service-payments', label: 'Service Payments', icon: 'credit-card' },
+        ]
+      }
+    ]
+  },
+
+  Attendee: {
+    label:       'Attendee',
+    badgeClass:  'role-user',
+    defaultView: 'user-dashboard',
     navSections: [
       {
         title: 'My Account',
         items: [
-          { id: 'user-dashboard',   label: 'My Dashboard',    icon: 'grid' },
-          { id: 'browse-events',    label: 'Browse Events',    icon: 'calendar' },
-          { id: 'my-registrations', label: 'My Registrations', icon: 'users' },
+          { id: 'user-dashboard',   label: 'My Dashboard',    icon: 'grid'        },
+          { id: 'browse-events',    label: 'Browse Events',    icon: 'calendar'    },
+          { id: 'my-registrations', label: 'My Registrations', icon: 'users'       },
         ]
       },
       {
@@ -64,63 +140,12 @@ const ROLE_CONFIG = {
           { id: 'make-payment', label: 'Pay for Event',   icon: 'dollar-sign' },
         ]
       }
-    ],
-    defaultView: 'user-dashboard'
-  },
-
-  vendor: {
-    label:      'Vendor',
-    badgeClass: 'role-vendor',
-    name:       'Amina O.',
-    initials:   'AO',
-    navSections: [
-      {
-        title: 'Vendor Portal',
-        items: [
-          { id: 'vendor-dashboard', label: 'My Dashboard',     icon: 'grid' },
-          { id: 'my-assignments',   label: 'Event Assignments', icon: 'calendar', badge: '3' },
-          { id: 'vendor-profile',   label: 'Vendor Profile',    icon: 'home' },
-        ]
-      },
-      {
-        title: 'Finance',
-        items: [
-          { id: 'vendor-invoices', label: 'Invoices & Quotes', icon: 'clipboard' },
-          { id: 'vendor-payments', label: 'Payment Tracking',  icon: 'credit-card' },
-        ]
-      }
-    ],
-    defaultView: 'vendor-dashboard'
-  },
-
-  provider: {
-    label:      'Service Provider',
-    badgeClass: 'role-provider',
-    name:       'Fatuma H.',
-    initials:   'FH',
-    navSections: [
-      {
-        title: 'Provider Portal',
-        items: [
-          { id: 'provider-dashboard', label: 'My Dashboard',     icon: 'grid' },
-          { id: 'my-services',        label: 'Assigned Services', icon: 'tool', badge: '2' },
-          { id: 'provider-profile',   label: 'Provider Profile',  icon: 'user' },
-        ]
-      },
-      {
-        title: 'Finance',
-        items: [
-          { id: 'service-payments', label: 'Service Payments', icon: 'credit-card' },
-        ]
-      }
-    ],
-    defaultView: 'provider-dashboard'
+    ]
   }
 };
 
 /* ─────────────────────────────────────
    SVG ICON PATH DATA
-   Referenced by sidebar nav builder.
 ───────────────────────────────────── */
 const ICONS = {
   'grid':        `<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`,
@@ -136,7 +161,7 @@ const ICONS = {
 };
 
 /* ─────────────────────────────────────
-   VIEW TITLES  (topbar page-title)
+   VIEW TITLES
 ───────────────────────────────────── */
 const VIEW_TITLES = {
   dashboard:            'Dashboard',
@@ -166,8 +191,7 @@ const VIEW_TITLES = {
 };
 
 /* ─────────────────────────────────────
-   ACTION LABELS  (topbar primary button)
-   Empty string = hide the button.
+   ACTION LABELS  (empty = hide button)
 ───────────────────────────────────── */
 const ACTION_LABELS = {
   dashboard:            '+ Create Event',
@@ -177,41 +201,47 @@ const ACTION_LABELS = {
   'event-vendors':      '+ Link Vendor',
   'service-providers':  '+ Add Provider',
   'event-services':     '+ Link Service',
-  payments:             '+ Record Payment',
-  users:                '+ Invite User',
-  roles:                '+ Create Role',
+  payments:             '',
+  users:                '',
+  roles:                '',
   'user-dashboard':     '🎟 Browse Events',
-  'browse-events':      '🎟 Register Now',
-  'my-registrations':   'View Details',
-  'my-payments':        '+ Make Payment',
+  'browse-events':      '',
+  'my-registrations':   '',
+  'my-payments':        '',
   'make-payment':       '',
-  'vendor-dashboard':   '+ Submit Quote',
-  'my-assignments':     'View All',
+  'vendor-dashboard':   '',
+  'my-assignments':     '',
   'vendor-profile':     'Edit Profile',
-  'vendor-invoices':    '+ New Invoice',
-  'vendor-payments':    'View Details',
-  'provider-dashboard': '+ View Services',
-  'my-services':        'View All',
+  'vendor-invoices':    '',
+  'vendor-payments':    '',
+  'provider-dashboard': '',
+  'my-services':        '',
   'provider-profile':   'Edit Profile',
-  'service-payments':   'View Details',
+  'service-payments':   '',
 };
 
 /* ─────────────────────────────────────
-   MODAL TITLES  (create/edit modal header)
+   MODAL TITLES
 ───────────────────────────────────── */
 const MODAL_TITLES_MAP = {
-  dashboard:            'Create New Event',
-  events:               'Create New Event',
-  registrations:        'Register Attendee',
-  vendors:              'Add Vendor',
-  'event-vendors':      'Link Vendor to Event',
-  'service-providers':  'Add Service Provider',
-  'event-services':     'Link Service to Event',
-  payments:             'Record Payment',
-  users:                'Invite User',
-  roles:                'Create Role',
-  'browse-events':      'Register for Event',
-  'vendor-dashboard':   'Submit Quote',
-  'vendor-invoices':    'New Invoice',
-  'my-registrations':   'Registration Details',
+  dashboard:           'Create New Event',
+  events:              'Create New Event',
+  registrations:       'Register Attendee',
+  vendors:             'Add Vendor',
+  'event-vendors':     'Link Vendor to Event',
+  'service-providers': 'Add Service Provider',
+  'event-services':    'Link Service to Event',
+  'browse-events':     'Register for Event',
+};
+
+/* ─────────────────────────────────────
+   LOGIN PAGE ROLE TILES
+   Maps tile id → real backend role name
+───────────────────────────────────── */
+const LOGIN_ROLE_MAP = {
+  'tile-admin':    'Admin',
+  'tile-planner':  'Planner',
+  'tile-vendor':   'Vendor',
+  'tile-provider': 'ServiceProvider',
+  'tile-attendee': 'Attendee',
 };

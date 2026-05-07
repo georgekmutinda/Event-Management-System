@@ -8,12 +8,12 @@ namespace Infrastructure.SeedData
     {
         public static async Task SeedAsync(AppDbContext context)
         {
-            // 🔥 Ensure seeding happens ONLY ONCE
             if (await context.Role.AnyAsync())
                 return;
 
             var roles = new List<Role>
             {
+                new Role { RoleName = "Admin" },
                 new Role { RoleName = "Planner" },
                 new Role { RoleName = "Vendor" },
                 new Role { RoleName = "Attendee" },

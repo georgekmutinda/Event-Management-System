@@ -43,17 +43,20 @@ services:
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
+      start_period: 30s
     networks:
       - event_network
 
   api:
-    image: gmutinda/eventmanagement-api:v1
+    build: 
+      context: .
+      dockerfile: EventManagementApi/Dockerfile
     container_name: event_mgmt_api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_URLS: http://+:5100
       ConnectionStrings__DefaultConnection: Host=postgres;Database=eventmanagementsystemdb;Username=postgres;Password=gkyalo
       ConnectionStrings__Redis: redis:6379
       RabbitMQ__HostName: rabbitmq
@@ -61,7 +64,15 @@ services:
       JwtSettings__Issuer: EventManagementAPI
       JwtSettings__Audience: EventManagementUsers
     ports:
-      - "5100:80"
+      - "5100:5100"
+    healthcheck:
+      # Simplified: Just check if the server responds at all. 
+      # Removing "-f" ensures 401 Unauthorized doesn't break the health status.
+      test: ["CMD-SHELL", "curl http://localhost:5100/api/auth/login || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,6 +82,19 @@ services:
         condition: service_healthy
     networks:
       - event_network
+
+  frontend:
+    image: nginx:alpine
+    container_name: event_mgmt_frontend
+    ports:
+      - "5500:80"
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+    networks:
+      - event_network
+    depends_on:
+      api:
+        condition: service_healthy
 
 networks:
   event_network:
