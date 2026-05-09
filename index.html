@@ -57,32 +57,32 @@
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" placeholder="••••••••••">
+          <input type="password" id="login-password" placeholder="••••••••••">
         </div>
-        <button class="auth-btn" onclick="enterApp()">Sign In to Platform</button>
+        <p id="login-error" style="color:#e55;font-size:13px;margin:4px 0 0;min-height:18px"></p>
+        <button id="login-btn" class="auth-btn" onclick="handleLogin()">Sign In to Platform</button>
         <div class="auth-divider">or continue as</div>
         <button class="auth-alt-link" onclick="enterApp()">Continue as Guest → Demo</button>
       </div>
 
-      <!-- REGISTER -->
       <div id="register-form" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="auth-field">
             <label>First Name</label>
-            <input type="text" placeholder="Alexandra">
+            <input id="reg-first" type="text" placeholder="Alexandra">
           </div>
           <div class="auth-field">
             <label>Last Name</label>
-            <input type="text" placeholder="Rothbury">
+            <input id="reg-last" type="text" placeholder="Rothbury">
           </div>
         </div>
         <div class="auth-field">
           <label>Email Address</label>
-          <input type="email" placeholder="you@company.com">
+          <input id="reg-email" type="email" placeholder="you@company.com">
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" placeholder="Min 8 characters">
+          <input id="reg-password" type="password" placeholder="Min 8 characters">
         </div>
         <div class="auth-field">
           <label>Role</label>
@@ -93,7 +93,8 @@
             <option value="provider">Service Provider</option>
           </select>
         </div>
-        <button class="auth-btn" onclick="enterApp()">Create My Account</button>
+        <p id="register-error" style="color:#e55;font-size:13px;margin:4px 0 0;min-height:18px"></p>
+        <button id="register-btn" class="auth-btn" onclick="handleRegister()">Create My Account</button>
       </div>
     </div>
   </div>
@@ -206,6 +207,7 @@
   <div class="toast" id="toast"></div>
 
   <!-- SCRIPTS -->
+  <script src="js/api.js"></script>
   <script src="js/config.js"></script>
   <script src="js/views.js"></script>
   <script src="js/payments.js"></script>

@@ -55,12 +55,31 @@ function closeModal(e) {  // eslint-disable-line no-unused-vars
 
 /**
  * Save the form and close the modal.
- * In production, wire this to the appropriate POST endpoint:
- *   POST /api/events, POST /api/vendors, etc.
+ * Delegates to the view-specific submit handler in api.js when available,
+ * otherwise falls back to a toast (for vendor/provider portal forms).
  */
 function saveAndClose() {  // eslint-disable-line no-unused-vars
-  document.getElementById('modal-backdrop').classList.remove('open');
-  showToast('Record saved successfully ✦');
+  const submitMap = {
+    dashboard:           submitEventForm,
+    events:              submitEventForm,
+    registrations:       submitRegistrationForm,
+    vendors:             submitVendorForm,
+    'event-vendors':     submitEventVendorForm,
+    'service-providers': submitProviderForm,
+    'event-services':    submitEventServiceForm,
+    payments:            submitPaymentForm,
+    users:               submitUserForm,
+    roles:               submitRoleForm,
+  };
+
+  const handler = submitMap[currentView];
+  if (typeof handler === 'function') {
+    const btn = document.querySelector('#modal-body .topbar-btn.btn-primary');
+    handler(btn);
+  } else {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    showToast('Record saved successfully ✦');
+  }
 }
 
 /* ─────────────────────────────────────
@@ -103,21 +122,21 @@ function doDelete() {  // eslint-disable-line no-unused-vars
 function createEventForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Event Name</label><input class="form-control" type="text" placeholder="e.g. Annual Tech Summit 2027"></div>
-      <div class="form-group"><label>Event Date</label><input class="form-control" type="date"></div>
+      <div class="form-group"><label>Event Name</label><input id="ef-name" class="form-control" type="text" placeholder="e.g. Annual Tech Summit 2027"></div>
+      <div class="form-group"><label>Event Date</label><input id="ef-date" class="form-control" type="date"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Venue</label><input class="form-control" placeholder="e.g. KICC, Nairobi"></div>
-      <div class="form-group"><label>Capacity</label><input class="form-control" type="number" placeholder="500"></div>
+      <div class="form-group"><label>Venue</label><input id="ef-venue" class="form-control" placeholder="e.g. KICC, Nairobi"></div>
+      <div class="form-group"><label>Capacity</label><input id="ef-capacity" class="form-control" type="number" placeholder="500"></div>
     </div>
     <div class="form-row full">
-      <div class="form-group"><label>Description</label><textarea class="form-control" rows="3" placeholder="Brief event description…"></textarea></div>
+      <div class="form-group"><label>Description</label><textarea id="ef-description" class="form-control" rows="3" placeholder="Brief event description…"></textarea></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Status</label>
-        <select class="form-control"><option>Draft</option><option>Published</option><option>Invite Only</option></select>
+        <select id="ef-status" class="form-control"><option>Draft</option><option>Published</option><option>Invite Only</option></select>
       </div>
-      <div class="form-group"><label>Ticket Price (KES)</label><input class="form-control" type="number" placeholder="0 for free"></div>
+      <div class="form-group"><label>Ticket Price (KES)</label><input id="ef-price" class="form-control" type="number" placeholder="0 for free"></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Save Event</button>
@@ -128,15 +147,12 @@ function createEventForm() {
 function registerAttendeeForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Attendee Name</label><input class="form-control" placeholder="James Mwangi"></div>
-      <div class="form-group"><label>Email</label><input class="form-control" type="email" placeholder="james@example.com"></div>
+      <div class="form-group"><label>Event ID</label><input id="rf-event" class="form-control" type="number" placeholder="Event ID"></div>
+      <div class="form-group"><label>User ID</label><input id="rf-user" class="form-control" type="number" placeholder="User ID"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Event</label>
-        <select class="form-control"><option>Tech Summit 2026</option><option>Annual Gala Dinner</option><option>Product Launch</option></select>
-      </div>
       <div class="form-group"><label>Ticket Type</label>
-        <select class="form-control"><option>General</option><option>VIP</option><option>Media</option></select>
+        <select id="rf-ticket" class="form-control"><option>General</option><option>VIP</option><option>Media</option></select>
       </div>
     </div>
     <div class="form-actions">
@@ -148,14 +164,14 @@ function registerAttendeeForm() {
 function addVendorForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Vendor Name</label><input class="form-control" placeholder="Bloom &amp; Co."></div>
+      <div class="form-group"><label>Vendor Name</label><input id="vf-name" class="form-control" placeholder="Bloom &amp; Co."></div>
       <div class="form-group"><label>Category</label>
-        <select class="form-control"><option>Catering</option><option>AV &amp; Tech</option><option>Décor</option><option>Photography</option></select>
+        <select id="vf-category" class="form-control"><option>Catering</option><option>AV &amp; Tech</option><option>Décor</option><option>Photography</option></select>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Contact Email</label><input class="form-control" type="email" placeholder="vendor@email.com"></div>
-      <div class="form-group"><label>Phone</label><input class="form-control" placeholder="+254 700 000 000"></div>
+      <div class="form-group"><label>Contact Email</label><input id="vf-email" class="form-control" type="email" placeholder="vendor@email.com"></div>
+      <div class="form-group"><label>Phone</label><input id="vf-phone" class="form-control" placeholder="+254 700 000 000"></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Add Vendor</button>
@@ -166,17 +182,13 @@ function addVendorForm() {
 function linkVendorForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Event</label>
-        <select class="form-control"><option>Tech Summit 2026</option><option>Annual Gala Dinner</option><option>Product Launch</option></select>
-      </div>
-      <div class="form-group"><label>Vendor</label>
-        <select class="form-control"><option>SoundWave Pro</option><option>Bloom &amp; Co.</option><option>Cater Elite</option></select>
-      </div>
+      <div class="form-group"><label>Event ID</label><input id="ev-event" class="form-control" type="number" placeholder="Event ID"></div>
+      <div class="form-group"><label>Vendor ID</label><input id="ev-vendor" class="form-control" type="number" placeholder="Vendor ID"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Role / Service</label><input class="form-control" placeholder="e.g. Main AV, Catering"></div>
-      <div class="form-group"><label>Confirmed</label>
-        <select class="form-control"><option>Invited</option><option>Pending</option><option>Confirmed</option></select>
+      <div class="form-group"><label>Role / Service</label><input id="ev-role" class="form-control" placeholder="e.g. Main AV, Catering"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="ev-status" class="form-control"><option>Invited</option><option>Pending</option><option>Confirmed</option></select>
       </div>
     </div>
     <div class="form-actions">
@@ -188,14 +200,14 @@ function linkVendorForm() {
 function addProviderForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Provider Name</label><input class="form-control" placeholder="EventGuard Security"></div>
+      <div class="form-group"><label>Provider Name</label><input id="pf-name" class="form-control" placeholder="EventGuard Security"></div>
       <div class="form-group"><label>Service Type</label>
-        <select class="form-control"><option>Security</option><option>Transport</option><option>Cleaning</option><option>Lighting</option></select>
+        <select id="pf-type" class="form-control"><option>Security</option><option>Transport</option><option>Cleaning</option><option>Lighting</option></select>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Contact Email</label><input class="form-control" type="email" placeholder="provider@email.com"></div>
-      <div class="form-group"><label>Phone</label><input class="form-control" placeholder="+254 700 000 000"></div>
+      <div class="form-group"><label>Contact Email</label><input id="pf-email" class="form-control" type="email" placeholder="provider@email.com"></div>
+      <div class="form-group"><label>Phone</label><input id="pf-phone" class="form-control" placeholder="+254 700 000 000"></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Add Provider</button>
@@ -206,16 +218,12 @@ function addProviderForm() {
 function linkServiceForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Event</label>
-        <select class="form-control"><option>Tech Summit 2026</option><option>Annual Gala Dinner</option><option>Product Launch</option></select>
-      </div>
-      <div class="form-group"><label>Service Provider</label>
-        <select class="form-control"><option>EventGuard Security</option><option>TransEA Logistics</option><option>CleanPro Kenya</option></select>
-      </div>
+      <div class="form-group"><label>Event ID</label><input id="es-event" class="form-control" type="number" placeholder="Event ID"></div>
+      <div class="form-group"><label>Provider ID</label><input id="es-provider" class="form-control" type="number" placeholder="Provider ID"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Service</label><input class="form-control" placeholder="e.g. Security, Transport"></div>
-      <div class="form-group"><label>Cost (KES)</label><input class="form-control" type="number" placeholder="25,000"></div>
+      <div class="form-group"><label>Service</label><input id="es-service" class="form-control" placeholder="e.g. Security, Transport"></div>
+      <div class="form-group"><label>Cost (KES)</label><input id="es-cost" class="form-control" type="number" placeholder="25000"></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Link Service</button>
@@ -226,22 +234,20 @@ function linkServiceForm() {
 function recordPaymentForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Event</label>
-        <select class="form-control"><option>Tech Summit 2026</option><option>Annual Gala Dinner</option><option>Product Launch</option></select>
-      </div>
-      <div class="form-group"><label>Payer Name</label><input class="form-control" placeholder="James Mwangi"></div>
+      <div class="form-group"><label>Event ID</label><input id="pay-event" class="form-control" type="number" placeholder="Event ID"></div>
+      <div class="form-group"><label>User ID</label><input id="pay-user" class="form-control" type="number" placeholder="User ID"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Amount (KES)</label><input class="form-control" type="number" placeholder="45,000"></div>
+      <div class="form-group"><label>Amount (KES)</label><input id="pay-amount" class="form-control" type="number" placeholder="45000"></div>
       <div class="form-group"><label>Payment Method</label>
-        <select class="form-control"><option>M-Pesa</option><option>Bank Transfer</option><option>Card</option><option>Cash</option></select>
+        <select id="pay-method" class="form-control"><option>M-Pesa</option><option>Bank Transfer</option><option>Card</option><option>Cash</option></select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Status</label>
-        <select class="form-control"><option>Paid</option><option>Pending</option><option>Failed</option></select>
+        <select id="pay-status" class="form-control"><option>Paid</option><option>Pending</option><option>Failed</option></select>
       </div>
-      <div class="form-group"><label>Date</label><input class="form-control" type="date"></div>
+      <div class="form-group"><label>Date</label><input id="pay-date" class="form-control" type="date"></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Record Payment</button>
@@ -252,14 +258,14 @@ function recordPaymentForm() {
 function inviteUserForm() {
   return `
     <div class="form-row">
-      <div class="form-group"><label>Full Name</label><input class="form-control" placeholder="James Mwangi"></div>
-      <div class="form-group"><label>Email</label><input class="form-control" type="email" placeholder="james@example.com"></div>
+      <div class="form-group"><label>Full Name</label><input id="uf-name" class="form-control" placeholder="James Mwangi"></div>
+      <div class="form-group"><label>Email</label><input id="uf-email" class="form-control" type="email" placeholder="james@example.com"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Role</label>
-        <select class="form-control"><option>Administrator</option><option>Event Organiser</option><option>Vendor</option><option>Service Provider</option></select>
+      <div class="form-group"><label>Temporary Password</label><input id="uf-password" class="form-control" type="password" placeholder="Min 8 characters"></div>
+      <div class="form-group"><label>Role ID</label>
+        <input id="uf-role" class="form-control" type="number" placeholder="Role ID (e.g. 1 = Admin)">
       </div>
-      <div class="form-group"><label>Department</label><input class="form-control" placeholder="Operations"></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Send Invitation</button>
@@ -270,10 +276,10 @@ function inviteUserForm() {
 function createRoleForm() {
   return `
     <div class="form-row full">
-      <div class="form-group"><label>Role Name</label><input class="form-control" placeholder="e.g. Finance Manager"></div>
+      <div class="form-group"><label>Role Name</label><input id="rolef-name" class="form-control" placeholder="e.g. Finance Manager"></div>
     </div>
     <div class="form-row full">
-      <div class="form-group"><label>Description</label><textarea class="form-control" rows="2" placeholder="Describe what this role can do…"></textarea></div>
+      <div class="form-group"><label>Description</label><textarea id="rolef-desc" class="form-control" rows="2" placeholder="Describe what this role can do…"></textarea></div>
     </div>
     <div class="form-actions">
       <button class="topbar-btn btn-primary" onclick="saveAndClose()">Create Role</button>

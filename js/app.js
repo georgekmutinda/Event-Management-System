@@ -70,6 +70,9 @@ function logout() {
   closeDeleteModal(null);
   closePaymentModal(null);
 
+  // Clear JWT session via api.js
+  if (typeof AuthAPI !== 'undefined') AuthAPI.logout();
+
   document.getElementById('app-page').style.display = 'none';
   document.getElementById('auth-page').style.display = 'flex';
   showToast('Signed out successfully');

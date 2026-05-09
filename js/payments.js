@@ -51,20 +51,29 @@ function switchPayTab(method, el) {  // eslint-disable-line no-unused-vars
 ───────────────────────────────────── */
 
 /**
- * Simulate processing a payment and show a toast.
- * In production, POST to /api/payments with method + payload.
+ * Process a payment: calls the backend via processPaymentAPI (api.js)
+ * which posts to POST /api/payments, then shows a toast.
  * @param {'mpesa'|'card'|'bank'} method
  */
 function processPayment(method) {  // eslint-disable-line no-unused-vars
-  closePaymentModal(null);
+  // Extract amount from the summary box currently rendered in the modal
+  const totalEl  = document.querySelector('.pay-summary-total');
+  const eventEl  = document.querySelector('.pay-summary-row span:last-child');
+  const amount   = totalEl  ? totalEl.textContent.trim()  : 'KES 0';
+  const event    = eventEl  ? eventEl.textContent.trim()  : '';
 
-  const msgs = {
-    mpesa: 'M-Pesa payment initiated — check your phone ✦',
-    card:  'Card payment processed successfully ✦',
-    bank:  'Bank transfer instructions sent to your email ✦',
-  };
-
-  showToast(msgs[method] || 'Payment processed ✦');
+  if (typeof processPaymentAPI === 'function') {
+    processPaymentAPI(method, event, amount);
+  } else {
+    // Fallback if api.js not yet loaded
+    closePaymentModal(null);
+    const msgs = {
+      mpesa: 'M-Pesa payment initiated — check your phone ✦',
+      card:  'Card payment processed successfully ✦',
+      bank:  'Bank transfer instructions sent to your email ✦',
+    };
+    showToast(msgs[method] || 'Payment processed ✦');
+  }
 }
 
 /* ─────────────────────────────────────
