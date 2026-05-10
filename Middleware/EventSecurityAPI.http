@@ -1,0 +1,6 @@
+@EventSecurityAPI_HostAddress = http://localhost:5217
+
+GET {{EventSecurityAPI_HostAddress}}/api/events
+Accept: application/json
+
+###
