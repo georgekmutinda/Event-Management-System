@@ -6,7 +6,11 @@ using EventSecurityAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer("Server=localhost;Database=eventmanagementsystemdb;Trusted_Connection=True;TrustServerCertificate=True;"));
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    var connString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseNpgsql(connString);
+});
 builder.Services.AddSingleton<PredictionEngine<SqlData, SqlPrediction>>(serviceProvider =>
 {
     var mlContext = new MLContext();
