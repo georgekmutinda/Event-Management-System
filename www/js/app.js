@@ -1,3 +1,4 @@
+
 /* Main application controller for the Eventara demo frontend. */
 
 const VENDOR_SUBMENU_ITEMS = [
@@ -10,14 +11,14 @@ let currentView = null; // Will be set in init
 let toastTimerId = null;
 
 const TOPBAR_ACTION_HANDLERS = {
-  'user-dashboard': () => showView('browse-events', document.querySelector('[data-view="browse-events"]')),
-  'my-payments': () => openPaymentModal('Annual Gala Dinner', 'KES 15,000'),
-  'vendor-profile': () => showToast('Profile edits are entered directly in this view.'),
-  'provider-dashboard': () => showView('my-services', document.querySelector('[data-view="my-services"]')),
-  'provider-profile': () => showToast('Profile edits are entered directly in this view.'),
+  'user-dashboard': () => window.showView('browse-events', document.querySelector('[data-view="browse-events"]')),
+  'my-payments': () => typeof openPaymentModal === 'function' && openPaymentModal('Annual Gala Dinner', 'KES 15,000'),
+  'vendor-profile': () => window.showToast('Profile edits are entered directly in this view.'),
+  'provider-dashboard': () => window.showView('my-services', document.querySelector('[data-view="my-services"]')),
+  'provider-profile': () => window.showToast('Profile edits are entered directly in this view.'),
 };
 
-function switchAuthTab(tab, el) {
+window.switchAuthTab = function(tab, el) {
   document.querySelectorAll('.auth-tab').forEach((node) => node.classList.remove('active'));
   if (el) el.classList.add('active');
 
@@ -26,10 +27,9 @@ function switchAuthTab(tab, el) {
   
   if (loginForm) loginForm.style.display = tab === 'login' ? 'block' : 'none';
   if (registerForm) registerForm.style.display = tab === 'register' ? 'block' : 'none';
-}
+};
 
-function selectRole(role, el) {
-  // Safety check: Ensure config exists
+window.selectRole = function(role, el) {
   if (typeof ROLE_CONFIG === 'undefined' || !ROLE_CONFIG[role]) {
     console.error(`Role configuration for "${role}" is missing!`);
     return;
@@ -52,13 +52,13 @@ function selectRole(role, el) {
   if (appPage && appPage.style.display === 'block') {
     applyRoleChrome();
   }
-}
+};
 
-function syncRegisterRole(role) {
-  selectRole(role, null);
-}
+window.syncRegisterRole = function(role) {
+  window.selectRole(role, null);
+};
 
-function enterApp() {
+window.enterApp = function() {
   const authPage = document.getElementById('auth-page');
   const appPage = document.getElementById('app-page');
   
@@ -68,13 +68,12 @@ function enterApp() {
   applyRoleChrome();
   
   if (typeof ROLE_CONFIG !== 'undefined' && ROLE_CONFIG[currentRole]) {
-    showView(ROLE_CONFIG[currentRole].defaultView, null);
-    showToast(`Welcome back, ${ROLE_CONFIG[currentRole].name}`);
+    window.showView(ROLE_CONFIG[currentRole].defaultView, null);
+    window.showToast(`Welcome back, ${ROLE_CONFIG[currentRole].name}`);
   }
-}
+};
 
-function logout() {
-  // Safety check for optional modal functions
+window.logout = function() {
   if (typeof closeModal === 'function') closeModal(null);
   if (typeof closeDeleteModal === 'function') closeDeleteModal(null);
   if (typeof closePaymentModal === 'function') closePaymentModal(null);
@@ -86,8 +85,8 @@ function logout() {
   
   if (appPage) appPage.style.display = 'none';
   if (authPage) authPage.style.display = 'flex';
-  showToast('Signed out successfully');
-}
+  window.showToast('Signed out successfully');
+};
 
 function applyRoleChrome() {
   if (typeof ROLE_CONFIG === 'undefined') return;
@@ -166,7 +165,7 @@ function buildIcon(iconName) {
   `;
 }
 
-function showView(id, navEl) {
+window.showView = function(id, navEl) {
   const template = typeof getViewTemplate === 'function' ? getViewTemplate(id) : null;
   const content = document.getElementById('main-content');
   const title = (typeof VIEW_TITLES !== 'undefined' ? VIEW_TITLES[id] : null) || 'Dashboard';
@@ -198,13 +197,13 @@ function showView(id, navEl) {
   }
 
   if (id === 'vendors' || id === 'event-vendors') {
-    openVendorMenu();
+    window.openVendorMenu();
   } else {
-    closeVendorMenu();
+    window.closeVendorMenu();
   }
-}
+};
 
-function handleTopbarAction() {
+window.handleTopbarAction = function() {
   const modalFormAvailable = typeof MODAL_FORMS !== 'undefined' && Boolean(MODAL_FORMS[currentView]);
   const handler = TOPBAR_ACTION_HANDLERS[currentView];
 
@@ -218,38 +217,37 @@ function handleTopbarAction() {
     return;
   }
 
-  showToast('This screen uses the inline actions shown in the content area.');
-}
+  window.showToast('This screen uses the inline actions shown in the content area.');
+};
 
-function toggleVendorMenu() {
+window.toggleVendorMenu = function() {
   const vendorSub = document.getElementById('vendor-sub');
   if (!vendorSub) return;
 
   if (vendorSub.classList.contains('open')) {
-    closeVendorMenu();
+    window.closeVendorMenu();
   } else {
-    openVendorMenu();
+    window.openVendorMenu();
     if (currentView !== 'vendors' && currentView !== 'event-vendors') {
-      showView('vendors', document.querySelector('[data-view="vendors"]'));
+      window.showView('vendors', document.querySelector('[data-view="vendors"]'));
     }
   }
-}
+};
 
-function openVendorMenu() {
+window.openVendorMenu = function() {
   const vendorSub = document.getElementById('vendor-sub');
   const vendorArrow = document.getElementById('vendor-arrow');
   if (vendorSub) vendorSub.classList.add('open');
   if (vendorArrow) vendorArrow.textContent = '-';
-}
-
-function closeVendorMenu() {
+};
+window.closeVendorMenu = function() {
   const vendorSub = document.getElementById('vendor-sub');
   const vendorArrow = document.getElementById('vendor-arrow');
   if (vendorSub) vendorSub.classList.remove('open');
   if (vendorArrow) vendorArrow.textContent = '+';
-}
+};
 
-function showToast(message, duration = 3000) {
+window.showToast = function(message, duration = 3000) {
   const toast = document.getElementById('toast');
   if (!toast) return;
 
@@ -261,7 +259,7 @@ function showToast(message, duration = 3000) {
     toast.classList.remove('show');
     toastTimerId = null;
   }, duration);
-}
+};
 
 // Fixed Init: Runs only when the browser is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -273,11 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // 2. Select the role in the UI (if the button exists)
       const roleBtn = document.getElementById(`role-${currentRole}`);
-      selectRole(currentRole, roleBtn);
+      window.selectRole(currentRole, roleBtn);
       
       console.log("Successfully loaded config for:", currentRole);
   } else {
       console.error("CRITICAL: ROLE_CONFIG is missing or Role name is mismatched.");
+      // This helper helps you debug if 'Admin' vs 'admin' is the issue
       console.log("Current ROLE_CONFIG keys:", Object.keys(window.ROLE_CONFIG || {}));
   }
 
@@ -288,3 +287,4 @@ document.addEventListener('DOMContentLoaded', () => {
   if (authPage) authPage.style.display = 'flex';
   if (appPage) appPage.style.display = 'none';
 });
+
