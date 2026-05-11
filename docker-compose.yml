@@ -53,6 +53,7 @@ services:
     build: 
       context: .
       dockerfile: EventManagementApi/Dockerfile
+    image: gmutinda/eventmanagement-api:v2  # Tag for automation
     container_name: event_mgmt_api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -66,8 +67,6 @@ services:
     ports:
       - "5100:5100"
     healthcheck:
-      # Simplified: Just check if the server responds at all. 
-      # Removing "-f" ensures 401 Unauthorized doesn't break the health status.
       test: ["CMD-SHELL", "curl http://localhost:5100/api/auth/login || exit 1"]
       interval: 20s
       timeout: 10s
@@ -84,12 +83,13 @@ services:
       - event_network
 
   frontend:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: gmutinda/eventmanagement-frontend:v2  # Tag for automation
     container_name: event_mgmt_frontend
     ports:
       - "5500:80"
-    volumes:
-      - ./www:/usr/share/nginx/html:ro
     networks:
       - event_network
     depends_on:
