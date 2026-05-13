@@ -1,16 +1,17 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.ML;
-using EventSecurityAPI.Models;
+using Microsoft.Extensions.ML;
+using EventManagementApi.Security.Models;
 
-namespace EventSecurityAPI.Middleware;
+namespace EventManagementApi.Security.Middleware;
 
 public class InjectionMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly PredictionEngine<EventSecurityAPI.Models.SqlData, EventSecurityAPI.Models.SqlPrediction> _predictor;
+    private readonly PredictionEngine<EventManagementApi.Security.Models.SqlData, EventManagementApi.Security.Models.SqlPrediction> _predictor;
 
-    public InjectionMiddleware(RequestDelegate next, PredictionEngine<EventSecurityAPI.Models.SqlData, EventSecurityAPI.Models.SqlPrediction> predictor)
+    public InjectionMiddleware(RequestDelegate next, PredictionEngine<EventManagementApi.Security.Models.SqlData, EventManagementApi.Security.Models.SqlPrediction> predictor)
     {
         _next = next;
         _predictor = predictor;     
@@ -39,7 +40,7 @@ public class InjectionMiddleware
         }
         //Feature Extraction
         var features = ExtractFeatures(body);
-        var data = new EventSecurityAPI.Models.SqlData
+        var data = new EventManagementApi.Security.Models.SqlData
         {
             ContainsOr = features.ContainsOr,
             ContainsUnion = features.ContainsUnion,
@@ -51,7 +52,7 @@ public class InjectionMiddleware
         //ML Prediction
         var prediction = _predictor.Predict(data);
         
-        if(prediction.Prediction && prediction.Probability > 0.7){
+        if(prediction.PredictedLabel && prediction.Probability > 0.7){
             context.Response.StatusCode = 400;
             await context.Response.WriteAsync("SQL Injection detected by ML.");
             return;
@@ -91,14 +92,14 @@ public class InjectionMiddleware
     }
 
     //Feature Extraction
-    private EventSecurityAPI.Models.SqlFeatures ExtractFeatures(string input)
+    private EventManagementApi.Security.Models.SqlFeatures ExtractFeatures(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
-            return new EventSecurityAPI.Models.SqlFeatures();
+            return new EventManagementApi.Security.Models.SqlFeatures();
 
         input = input.ToLower();
 
-        return new EventSecurityAPI.Models.SqlFeatures
+        return new EventManagementApi.Security.Models.SqlFeatures
         {
             ContainsOr = Regex.IsMatch(input, @"'\s*or") ? 1 : 0,
             ContainsUnion = input.Contains("union") ? 1 : 0,
@@ -129,7 +130,7 @@ public class InjectionMiddleware
         public void TestModel()
     {
         var result = Predictor.Predict(sample);
-        Console.WriteLine($"Prediction:{result.Prediction}, Probability:{result.Probability}");
+        Console.WriteLine($"Prediction:{result.PredictedLabel}, Probability:{result.Probability}");
 
         Console.WriteLine($"Precision Results from Testing;");
         Console.WriteLine($"Accuracy: {metrics.Accuracy}");

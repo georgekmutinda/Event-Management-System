@@ -10,6 +10,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using StackExchange.Redis;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.ML;
+using Microsoft.Extensions.ML;
+using EventManagementApi.Security.Models;
+using EventManagementApi.Security.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +99,22 @@ builder.Services.AddAuthorization(options => {
         .Build();
 });
 
+builder.Services.AddSingleton<PredictionEngine<SqlData, SqlPrediction>>(serviceProvider =>
+{
+    var mlContext = new MLContext();
+    var trainData = new List<SqlData>
+    { 
+        new SqlData { ContainsOr = 0, ContainsUnion = 0, ContainsComment = 0, QuoteCount = 0, QueryLength = 30, Label = false },
+        new SqlData { ContainsOr = 1, ContainsUnion = 0, ContainsComment = 1, QuoteCount = 2, QueryLength = 15, Label = true }
+    };
+    var data = mlContext.Data.LoadFromEnumerable(trainData);
+    var pipeline = mlContext.Transforms.Concatenate("Features", "ContainsOr", "ContainsUnion", "ContainsComment", "QuoteCount", "QueryLength")
+        .Append(mlContext.BinaryClassification.Trainers.SdcaLogisticRegression());
+    var model = pipeline.Fit(data);
+    return mlContext.Model.CreatePredictionEngine<SqlData, SqlPrediction>(model);
+});
+
+
 var app = builder.Build();
 
 // --- 7. Database Migration & Seeding ---
@@ -125,6 +145,7 @@ if (!app.Environment.IsDevelopment())
 app.Urls.Add("http://0.0.0:5100");
 
 app.UseCors("LocalDev");
+app.UseMiddleware<InjectionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
