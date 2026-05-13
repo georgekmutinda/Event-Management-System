@@ -33,7 +33,7 @@
 .pay-stat-pending     { font-size: 18px; font-family: 'Cormorant Garamond', serif; color: var(--gold); }
 
 /* ═══ PAYMENT MODAL ═══ */
-.pay-modal { width: 520px; }
+.pay-modal { width: 540px; }
 
 /* ── Method tab strip ── */
 .pay-method-tabs {
@@ -43,10 +43,12 @@
   padding: 4px;
   border-radius: 10px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .pay-method-tab {
   flex: 1;
+  min-width: 0;
   padding: 10px 8px;
   border: none;
   background: transparent;
@@ -58,11 +60,22 @@
   border-radius: 8px;
   transition: all 0.2s;
   text-align: center;
+  white-space: nowrap;
 }
 
 .pay-method-tab.active {
   background: var(--panel);
   color: var(--gold);
+}
+
+/* Special styling for the "Have a Code?" tab */
+.pay-code-tab {
+  color: #7EC4A0;
+  font-style: italic;
+}
+.pay-code-tab.active {
+  color: #7EC4A0;
+  background: rgba(126, 196, 160, 0.1);
 }
 
 /* ── Method panels ── */
@@ -153,4 +166,67 @@
 .pay-btn:hover {
   background: var(--gold-lit);
   transform: translateY(-1px);
+}
+
+.pay-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ═══ PAYMENT CODE REDEMPTION PANEL ═══ */
+
+.pay-code-header {
+  text-align: center;
+  padding: 16px 0 20px;
+}
+
+.pay-code-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.pay-code-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.pay-code-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.pay-code-input {
+  font-family: 'Courier New', monospace !important;
+  font-size: 18px !important;
+  letter-spacing: 3px;
+  text-align: center;
+  padding: 14px !important;
+}
+
+/* Result feedback box */
+.pay-code-result {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+
+.pay-code-result.success {
+  background: rgba(39, 174, 96, 0.1);
+  border-color: rgba(39, 174, 96, 0.3);
+  color: #27ae60;
+}
+
+.pay-code-result.error {
+  background: rgba(231, 76, 60, 0.1);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
 }

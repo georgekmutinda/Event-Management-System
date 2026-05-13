@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/views.css">
   <link rel="stylesheet" href="css/payment.css">
+  <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
 
@@ -37,14 +38,19 @@
         <div class="auth-field">
           <label>Password</label>
           <input type="password" id="login-password" placeholder="••••••••••" autocomplete="current-password"
-                 onkeydown="if(event.key==='Enter') handleLogin(event)">
+                 onkeydown="if(event.key==='Enter') handleLogin()">
         </div>
-        <button class="auth-btn" id="login-btn" onclick="handleLogin(event)">Sign In to Platform</button>
+        <div id="login-error" style="color:#e74c3c;font-size:13px;margin-bottom:10px;min-height:18px"></div>
+        <button class="auth-btn" id="login-btn" onclick="handleLogin()">Sign In to Platform</button>
         <div class="auth-divider">or continue as</div>
         <button class="auth-alt-link" onclick="handleGuestDemo()">Continue as Guest → Demo</button>
       </div>
 
-      <!-- ── REGISTER ── -->
+      <!-- ── REGISTER ──
+           NOTE: Admin is NOT a selectable role here.
+           The Admin/System panel is accessed via the ⚙ icon after login.
+           The "Planner" role (formerly "Administrator") is selectable.
+      -->
       <div id="register-form" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
           <div class="auth-field">
@@ -70,6 +76,7 @@
           <input type="password" id="reg-password" placeholder="Min 8 characters" autocomplete="new-password"
                  onkeydown="if(event.key==='Enter') handleRegister()">
         </div>
+        <div id="register-error" style="color:#e74c3c;font-size:13px;margin-bottom:10px;min-height:18px"></div>
         <button class="auth-btn" id="register-btn" onclick="handleRegister()">Create My Account</button>
       </div>
     </div>
@@ -82,11 +89,11 @@
       <!-- SIDEBAR -->
       <aside class="sidebar" id="main-sidebar">
         <div class="sidebar-logo">Event<span>ara</span></div>
-        <div id="sidebar-role-badge" class="sidebar-role-badge role-admin">Administrator</div>
+        <div id="sidebar-role-badge" class="sidebar-role-badge role-admin">Planner</div>
         <div id="sidebar-nav"></div>
         <div class="sidebar-bottom">
           <div class="user-pill" onclick="logout()">
-            <div class="user-avatar" id="user-avatar-initials">AU</div>
+            <div class="user-avatar" id="user-avatar-initials">PL</div>
             <div class="user-info-text">
               <div class="user-name" id="user-display-name">User</div>
               <div class="user-role" id="user-display-role">Role</div>
@@ -124,15 +131,46 @@
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
             </div>
-            <button class="topbar-btn btn-primary" id="topbar-action" onclick="handleTopbarAction()" style="display:none">
+
+            <!--
+              ⚙ ADMIN SETTINGS ICON
+              This is NOT a role — it opens the System Administration panel.
+              Only visible when the logged-in user has the Admin role.
+              Hidden by default; shown by updateAdminSettingsVisibility() in admin.js after login.
+            -->
+            <button class="admin-settings-btn" id="admin-settings-btn"
+                    onclick="openAdminPanel()" title="System Administration"
+                    style="display:none" aria-label="System Administration">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+                   style="width:18px;height:18px">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83
+                  2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1
+                  1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65
+                  0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65
+                  0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65
+                  1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1
+                  2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0
+                  1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65
+                  0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65
+                  0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65
+                  1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+
+            <button class="topbar-btn btn-primary" id="topbar-action"
+                    onclick="handleTopbarAction()" style="display:none">
               + Create
             </button>
           </div>
         </header>
 
         <!-- Global loading spinner -->
-        <div id="global-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9999;align-items:center;justify-content:center">
-          <div style="width:40px;height:40px;border:3px solid rgba(201,168,76,.3);border-top-color:#c9a84c;border-radius:50%;animation:spin .7s linear infinite"></div>
+        <div id="global-loading"
+             style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9999;align-items:center;justify-content:center">
+          <div style="width:40px;height:40px;border:3px solid rgba(201,168,76,.3);
+                      border-top-color:#c9a84c;border-radius:50%;animation:spin .7s linear infinite"></div>
         </div>
 
         <div class="content" id="main-content">
@@ -142,8 +180,38 @@
     </div>
   </div>
 
+  <!-- ══════════════ ADMIN PANEL MODAL ══════════════ -->
+  <div class="modal-backdrop" id="admin-panel-modal"
+       onclick="closeAdminPanel(event)" style="display:none">
+    <div class="modal admin-panel-modal-inner">
+      <div class="modal-header admin-panel-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.7"
+               style="width:20px;height:20px;flex-shrink:0">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83
+              2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1
+              1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65
+              0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65
+              0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65
+              1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1
+              2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0
+              1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65
+              0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65
+              0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65
+              1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <div class="modal-title" style="color:#c9a84c">System Administration</div>
+        </div>
+        <button class="modal-close" onclick="closeAdminPanel(null)">✕</button>
+      </div>
+      <!-- Injected by admin.js -->
+      <div id="admin-panel-body" style="padding:0;flex:1;overflow:hidden;display:flex;flex-direction:column"></div>
+    </div>
+  </div>
+
   <!-- ══════════════ CREATE / EDIT MODAL ══════════════ -->
-  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)" style="display:none">
+  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
     <div class="modal">
       <div class="modal-header">
         <div class="modal-title" id="modal-title">Create</div>
@@ -154,7 +222,7 @@
   </div>
 
   <!-- ══════════════ PAYMENT MODAL ══════════════ -->
-  <div class="modal-backdrop" id="payment-modal" onclick="closePaymentModal(event)" style="display:none">
+  <div class="modal-backdrop" id="payment-modal" onclick="closePaymentModal(event)">
     <div class="modal pay-modal">
       <div class="modal-header">
         <div class="modal-title">💳 Make Payment</div>
@@ -165,7 +233,7 @@
   </div>
 
   <!-- ══════════════ DELETE CONFIRM MODAL ══════════════ -->
-  <div class="modal-backdrop" id="delete-modal" onclick="closeDeleteModal(event)" style="display:none">
+  <div class="modal-backdrop" id="delete-modal" onclick="closeDeleteModal(event)">
     <div class="modal" style="width:400px">
       <div class="modal-header">
         <div class="modal-title" style="font-size:20px;color:#C0392B">Confirm Delete</div>
@@ -183,19 +251,25 @@
     </div>
   </div>
 
-  <!-- ══════════════ SPINNER KEYFRAME ══════════════ -->
+  <!-- Toast notification -->
+  <div id="toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+       background:#1e1912;border:1px solid var(--border);color:var(--text);padding:12px 22px;
+       border-radius:10px;font-size:13px;z-index:10000;opacity:0;transition:opacity .3s;
+       pointer-events:none;white-space:nowrap"></div>
+
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }
+    #toast.show { opacity: 1; }
   </style>
 
-  <!-- ══════════════ SCRIPTS ══════════════ -->
- 
-  <script src="js/config.js" defer></script>
-  <script src="js/views.js" defer></script>
-   <script src="js/api.js" defer></script>
-  <script src="js/app.js" defer></script>
+  <!-- ══════════════ SCRIPTS (order matters) ══════════════ -->
+  <script src="js/config.js"   defer></script>
+  <script src="js/views.js"    defer></script>
+  <script src="js/api.js"      defer></script>
+  <script src="js/app.js"      defer></script>
   <script src="js/payments.js" defer></script>
-  <script src="js/modals.js" defer></script>
-  
+  <script src="js/modals.js"   defer></script>
+  <script src="js/admin.js"    defer></script>
+
 </body>
 </html>

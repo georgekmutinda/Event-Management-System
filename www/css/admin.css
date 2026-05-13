@@ -1,0 +1,182 @@
+/* ═══════════════════════════════════════
+   admin.css — System Administration Panel
+═══════════════════════════════════════ */
+
+/* ── ⚙ Settings gear button in topbar ── */
+.admin-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.admin-settings-btn:hover {
+  color: #c9a84c;
+  border-color: #c9a84c;
+  background: rgba(201, 168, 76, 0.08);
+}
+
+/* ── Admin panel modal container ── */
+.admin-panel-modal-inner {
+  width: 860px;
+  max-width: 96vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-panel-header {
+  background: linear-gradient(135deg, #1a1410, #2d2218);
+  border-bottom: 1px solid #3a2e1e;
+}
+
+/* ── Tab bar ── */
+.ap-tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--sidebar);
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+.ap-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 18px;
+  font-size: 12px;
+  font-family: 'Jost', sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+  white-space: nowrap;
+}
+.ap-tab.active,
+.ap-tab:hover {
+  color: #c9a84c;
+  border-bottom-color: #c9a84c;
+}
+
+/* ── Panel wrapper ── */
+.ap-panel {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 130px);
+}
+.ap-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.ap-panel-title {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Online status dot ── */
+.ap-online-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #27ae60;
+  margin-right: 5px;
+  box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.25);
+  animation: ap-pulse 2s infinite;
+}
+@keyframes ap-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(39,174,96,0.25); }
+  50%       { box-shadow: 0 0 0 5px rgba(39,174,96,0.0);  }
+}
+
+/* ── Kick button ── */
+.ap-kick-btn {
+  padding: 5px 12px !important;
+  font-size: 11px !important;
+  background: rgba(192, 57, 43, 0.15) !important;
+  color: #e74c3c !important;
+  border: 1px solid rgba(231, 76, 60, 0.3) !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.ap-kick-btn:hover {
+  background: rgba(231, 76, 60, 0.25) !important;
+  border-color: #e74c3c !important;
+}
+
+/* ── Loading / empty ── */
+.ap-loading,
+.ap-empty {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── Broadcast form ── */
+.ap-broadcast-form { padding: 0; }
+.ap-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ── Message list ── */
+.ap-msg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ap-msg-item {
+  border-radius: 8px;
+  padding: 12px 14px;
+  border-left: 3px solid transparent;
+  background: var(--panel);
+}
+.ap-msg-info    { border-left-color: #3498db; background: rgba(52,152,219,0.06); }
+.ap-msg-warning { border-left-color: #c9a84c; background: rgba(201,168,76,0.06); }
+.ap-msg-danger  { border-left-color: #e74c3c; background: rgba(231,76,60,0.08);  }
+
+.ap-msg-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.ap-msg-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── badge-red (used in messages) ── */
+.badge-red {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}

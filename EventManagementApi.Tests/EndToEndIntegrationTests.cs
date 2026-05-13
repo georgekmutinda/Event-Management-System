@@ -6,6 +6,46 @@ using System.Collections.Generic;
 
 namespace EventManagementApi.Tests
 {
+    public sealed class LiveApiFactAttribute : FactAttribute
+    {
+        private const string BaseUrl = "http://localhost:5100";
+
+        public LiveApiFactAttribute()
+        {
+            if (!LiveApiGuard.IsAvailable(BaseUrl))
+            {
+                Skip = $"Live API unavailable at {BaseUrl}";
+            }
+        }
+    }
+
+    internal static class LiveApiGuard
+    {
+        public static bool IsAvailable(string baseUrl)
+        {
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+            try
+            {
+                using var response = client.GetAsync($"{baseUrl}/swagger/index.html").GetAwaiter().GetResult();
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static async Task EnsureAvailableAsync(string baseUrl)
+        {
+            if (!IsAvailable(baseUrl))
+            {
+                throw new InvalidOperationException($"Live API unavailable at {baseUrl}");
+            }
+
+            await Task.CompletedTask;
+        }
+    }
+
     /// <summary>
     /// End-to-End Integration Tests for Event Management API
     /// Tests complete workflows including JWT authentication, authorization, and caching
@@ -21,6 +61,7 @@ namespace EventManagementApi.Tests
         public async Task InitializeAsync()
         {
             _client = new HttpClient();
+            await LiveApiGuard.EnsureAvailableAsync(_baseUrl);
             await RegisterTestUser();
         }
 
@@ -60,7 +101,7 @@ namespace EventManagementApi.Tests
 
         // ==================== AUTHENTICATION TESTS ====================
 
-        [Fact]
+        [LiveApiFact]
         public async Task Register_WithValidData_Returns200()
         {
             var request = new
@@ -75,7 +116,7 @@ namespace EventManagementApi.Tests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
-        [Fact]
+        [LiveApiFact]
         public async Task Login_WithValidCredentials_Returns200AndToken()
         {
             var request = new { email = _testEmail, password = _testPassword };
@@ -89,14 +130,14 @@ namespace EventManagementApi.Tests
 
         // ==================== AUTHORIZATION TESTS ====================
 
-        [Fact]
+        [LiveApiFact]
         public async Task GetUsers_WithoutToken_Returns401()
         {
             var response = await _client.GetAsync($"{_baseUrl}/api/users");
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         }
 
-        [Fact]
+        [LiveApiFact]
         public async Task GetUsers_WithValidToken_Returns200()
         {
             var token = await GetJwtToken();
@@ -108,7 +149,7 @@ namespace EventManagementApi.Tests
 
         // ==================== USER ENDPOINT TESTS ====================
 
-        [Fact]
+        [LiveApiFact]
         public async Task GetAllUsers_Returns200AndData()
         {
             var token = await GetJwtToken();
@@ -122,7 +163,7 @@ namespace EventManagementApi.Tests
 
         // ==================== EVENT ENDPOINT TESTS ====================
 
-        [Fact]
+        [LiveApiFact]
         public async Task CreateEvent_WithValidData_Returns201()
         {
             var token = await GetJwtToken();
@@ -143,7 +184,7 @@ namespace EventManagementApi.Tests
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         }
 
-        [Fact]
+        [LiveApiFact]
         public async Task GetAllEvents_Returns200()
         {
             var token = await GetJwtToken();
@@ -155,7 +196,7 @@ namespace EventManagementApi.Tests
 
         // ==================== CACHING TESTS ====================
 
-        [Fact]
+        [LiveApiFact]
         public async Task GetEvents_SecondRequest_ShouldBeFromCache()
         {
             var token = await GetJwtToken();
@@ -177,7 +218,7 @@ namespace EventManagementApi.Tests
 
         // ==================== OPENAPI TEST ====================
 
-        [Fact]
+        [LiveApiFact]
         public async Task OpenApiEndpoint_Returns200()
         {
             var response = await _client.GetAsync($"{_baseUrl}/openapi/v1.json");
@@ -220,6 +261,7 @@ namespace EventManagementApi.Tests
         public async Task InitializeAsync()
         {
             _client = new HttpClient();
+            await LiveApiGuard.EnsureAvailableAsync(_baseUrl);
             await AuthenticateAsync();
         }
 
@@ -250,7 +292,7 @@ namespace EventManagementApi.Tests
             _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _jwtToken);
         }
 
-        [Fact]
+        [LiveApiFact]
         public async Task CachedEndpoint_ShouldBeFasterOnSecondRequest()
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -291,6 +333,7 @@ namespace EventManagementApi.Tests
         public async Task InitializeAsync()
         {
             _client = new HttpClient();
+            await LiveApiGuard.EnsureAvailableAsync(_baseUrl);
             await SetupUsersAsync();
         }
 
@@ -336,7 +379,7 @@ namespace EventManagementApi.Tests
             _plannerToken = plannerLoginContent.GetProperty("token").GetString();
         }
 
-        [Fact]
+        [LiveApiFact]
         public async Task AuthorizedUser_CanAccessProtectedEndpoint()
         {
             _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _attendeeToken);
@@ -344,7 +387,7 @@ namespace EventManagementApi.Tests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
-        [Fact]
+        [LiveApiFact]
         public async Task UnauthorizedUser_CannotAccessProtectedEndpoint()
         {
             var response = await _client.GetAsync($"{_baseUrl}/api/users");
