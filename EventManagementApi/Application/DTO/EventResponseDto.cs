@@ -32,6 +32,11 @@ namespace Application.DTOs
         public DateTime EventDate { get; set; }
 
         /// <summary>
+        /// Ticket price charged for the event
+        /// </summary>
+        public decimal TicketPrice { get; set; }
+
+        /// <summary>
         /// ID of the event planner (user)
         /// </summary>
         public int PlannerId { get; set; }

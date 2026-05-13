@@ -24,6 +24,7 @@ namespace Domain.Entities
         public string Title { get; set; }
         public string Description { get; set; }
         public string Location { get; set; }
+        public decimal TicketPrice { get; set; }
 
         public DateTime EventDate { get; set; }
         public DateTime CreatedAt { get; set; }

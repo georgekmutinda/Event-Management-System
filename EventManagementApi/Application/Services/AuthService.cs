@@ -1,97 +1,138 @@
+using Application.DTOs;
 using Application.DTOs.Auth;
 using Application.Interfaces;
+using Domain.Data;
 using Domain.Entities;
-using Infrastructure.Interfaces;
-using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using System.Text.Json;
 
 namespace Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly JwtTokenService _jwtTokenService;
-        private readonly IRabbitMqService _rabbitMqService;
+        private readonly AppDbContext _db;
+        private readonly JwtTokenService _jwt;
+        private readonly IConnectionMultiplexer _redis;
+        private readonly IHttpContextAccessor _http;
 
         public AuthService(
-            IUserRepository userRepository, 
-            JwtTokenService jwtTokenService,
-            IRabbitMqService rabbitMqService)
+            AppDbContext db,
+            JwtTokenService jwt,
+            IConnectionMultiplexer redis,
+            IHttpContextAccessor http)
         {
-            _userRepository = userRepository;
-            _jwtTokenService = jwtTokenService;
-            _rabbitMqService = rabbitMqService;
+            _db = db;
+            _jwt = jwt;
+            _redis = redis;
+            _http = http;
         }
 
-        public async Task RegisterAsync(RegisterRequestDto request)
+        public async Task RegisterAsync(RegisterRequestDto dto)
         {
-            // 1. Check if user exists
-            var existingUser = await _userRepository.GetByEmailAsync(request.Email);
+            if (await _db.User.AnyAsync(user => user.Email == dto.Email))
+            {
+                throw new InvalidOperationException("An account with this email already exists.");
+            }
 
-            if (existingUser != null)
-                throw new Exception("User already exists");
+            var requestedRoles = dto.Roles?
+                .Where(role => !string.IsNullOrWhiteSpace(role))
+                .Select(role => role.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
 
-            // 2. Create user
+            if (requestedRoles.Count == 0)
+            {
+                requestedRoles.Add("Attendee");
+            }
+
+            if (requestedRoles.Any(role => role.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("Admin accounts can only be created from system administration.");
+            }
+
+            var roles = await _db.Role
+                .Where(role => requestedRoles.Contains(role.RoleName))
+                .ToListAsync();
+
+            if (roles.Count != requestedRoles.Count)
+            {
+                throw new InvalidOperationException("One or more requested roles do not exist.");
+            }
+
             var user = new User
             {
-                FullName = request.FullName,
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+                FullName = dto.FullName,
+                Email = dto.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
-            await _userRepository.AddUserAsync(user);
+            _db.User.Add(user);
+            await _db.SaveChangesAsync();
 
-            // 3. Assign roles (ONLY if they exist in DB)
-            foreach (var roleName in request.Roles)
+            foreach (var role in roles)
             {
-                var role = await _userRepository.GetRoleByNameAsync(roleName);
-
-                if (role == null)
-                    continue; // skip invalid roles safely
-
-                var userRole = new UserRole
+                _db.UserRole.Add(new UserRole
                 {
                     UserId = user.UserId,
                     RoleId = role.RoleId
-                };
-
-                await _userRepository.AddUserRoleAsync(userRole);
+                });
             }
 
-            // 4. Publish UserRegistered event to RabbitMQ
-            await _rabbitMqService.PublishAsync("UserRegistered", new
-            {
-                userId = user.UserId,
-                email = user.Email,
-                fullName = user.FullName,
-                timestamp = DateTime.UtcNow
-            });
+            await _db.SaveChangesAsync();
         }
 
-        public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
+        public async Task<LoginResponseDto> LoginAsync(LoginRequestDto dto)
         {
-            // 1. Find user by email
-            var user = await _userRepository.GetByEmailAsync(request.Email);
+            var user = await _db.User
+                .Include(item => item.UserRoles)
+                .ThenInclude(item => item.Role)
+                .FirstOrDefaultAsync(item => item.Email == dto.Email)
+                ?? throw new UnauthorizedAccessException("Invalid email or password.");
 
-            if (user == null)
-                throw new Exception("Invalid credentials");
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            {
+                throw new UnauthorizedAccessException("Invalid email or password.");
+            }
 
-            // 2. Verify password using BCrypt
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            var roles = user.UserRoles
+                .Select(item => item.Role)
+                .Where(item => item != null)
+                .ToList();
 
-            if (!isPasswordValid)
-                throw new Exception("Invalid credentials");
+            var primaryRole = roles.FirstOrDefault()?.RoleName ?? "Attendee";
+            var token = _jwt.GenerateToken(user, roles!);
+            var sessionId = Guid.NewGuid().ToString("N");
 
-            // 3. Load user roles from UserRole table
-            var roles = await _userRepository.GetUserRolesAsync(user.UserId);
+            var session = new ActiveSessionDto
+            {
+                SessionId = sessionId,
+                UserId = user.UserId,
+                UserName = user.FullName,
+                Email = user.Email,
+                Role = primaryRole,
+                Ip = _http.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                LoginTime = DateTime.UtcNow
+            };
 
-            // 4. Generate JWT token (1 hour expiry)
-            var token = _jwtTokenService.GenerateToken(user, roles);
+            var redisDb = _redis.GetDatabase();
+            var tokenTtl = TimeSpan.FromHours(24);
 
-            // 5. Return LoginResponseDto
+            await redisDb.StringSetAsync(
+                $"session:{sessionId}",
+                JsonSerializer.Serialize(session),
+                tokenTtl);
+
+            await redisDb.SetAddAsync("sessions:active", sessionId);
+
             return new LoginResponseDto
             {
                 Token = token,
-                ExpiresIn = 3600 // 1 hour in seconds
+                Email = user.Email,
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Role = primaryRole,
+                SessionId = sessionId
             };
         }
     }

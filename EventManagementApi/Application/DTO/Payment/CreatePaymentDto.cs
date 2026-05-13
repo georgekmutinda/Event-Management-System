@@ -16,5 +16,7 @@ namespace Application.DTOs
 
         [Range(0.01, 999999999, ErrorMessage = "Amount must be greater than zero")]
         public decimal Amount { get; set; }
+
+        public string? PaymentStatus { get; set; }
     }
 }

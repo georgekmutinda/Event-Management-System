@@ -1,16 +1,13 @@
 using AutoMapper;
 using Application.DTOs;
 using Application.Interfaces;
+using Domain.Data;
 using Domain.Entities;
 using Infrastructure.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services;
 
-/// <summary>
-/// Service for managing payment operations.
-/// Implements IPaymentService with business logic for payment CRUD operations.
-/// Uses repository pattern and AutoMapper for clean separation of concerns.
-/// </summary>
 public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _repository;
@@ -18,51 +15,50 @@ public class PaymentService : IPaymentService
     private readonly IEventRepository _eventRepository;
     private readonly IMapper _mapper;
     private readonly IRabbitMqService _rabbitMqService;
+    private readonly AppDbContext _db;
 
     public PaymentService(
         IPaymentRepository repository,
         IUserRepository userRepository,
         IEventRepository eventRepository,
         IMapper mapper,
-        IRabbitMqService rabbitMqService)
+        IRabbitMqService rabbitMqService,
+        AppDbContext db)
     {
         _repository = repository;
         _userRepository = userRepository;
         _eventRepository = eventRepository;
         _mapper = mapper;
         _rabbitMqService = rabbitMqService;
+        _db = db;
     }
 
-    /// <summary>
-    /// Creates a new payment record.
-    /// Validates that both user and event exist before creating.
-    /// Sets default payment status to "Pending" and payment date to UTC now.
-    /// </summary>
     public async Task<PaymentResponseDto> CreateAsync(CreatePaymentDto dto)
     {
-        // Validate that user exists
         var user = await _userRepository.GetByIdAsync(dto.UserId);
         if (user == null)
+        {
             throw new Exception($"User with ID '{dto.UserId}' not found");
+        }
 
-        // Validate that event exists
         var eventEntity = await _eventRepository.GetByIdAsync(dto.EventId);
         if (eventEntity == null)
+        {
             throw new Exception($"Event with ID '{dto.EventId}' not found");
+        }
 
-        // Validate amount
         if (dto.Amount <= 0)
+        {
             throw new Exception("Payment amount must be greater than zero");
+        }
 
-        // Map DTO to entity
         var payment = _mapper.Map<Payment>(dto);
-        payment.PaymentStatus = "Pending"; // Default status
-        payment.PaymentDate = DateTime.UtcNow; // Set current UTC time
+        payment.PaymentStatus = string.IsNullOrWhiteSpace(dto.PaymentStatus) ? "Completed" : dto.PaymentStatus.Trim();
+        payment.PaymentDate = DateTime.UtcNow;
 
-        // Add to repository
         await _repository.AddAsync(payment);
+        await EnsureRegistrationStatusAsync(dto.EventId, dto.UserId, payment.PaymentStatus);
 
-        // Publish PaymentCreated event to RabbitMQ
         await _rabbitMqService.PublishAsync("PaymentCreated", new
         {
             paymentId = payment.PaymentId,
@@ -74,30 +70,110 @@ public class PaymentService : IPaymentService
             timestamp = DateTime.UtcNow
         });
 
-        // Return mapped response
         return _mapper.Map<PaymentResponseDto>(payment);
     }
 
-    /// <summary>
-    /// Retrieves all payments from the system.
-    /// </summary>
     public async Task<List<PaymentResponseDto>> GetAllAsync()
     {
         var payments = await _repository.GetAllAsync();
         return _mapper.Map<List<PaymentResponseDto>>(payments);
     }
 
-    /// <summary>
-    /// Retrieves a single payment by ID.
-    /// Throws exception if payment not found.
-    /// </summary>
     public async Task<PaymentResponseDto> GetByIdAsync(int id)
     {
         var payment = await _repository.GetByIdAsync(id);
-
         if (payment == null)
+        {
             throw new Exception($"Payment with ID '{id}' not found");
+        }
 
         return _mapper.Map<PaymentResponseDto>(payment);
+    }
+
+    public async Task<PaymentCodeRedemptionResponseDto> RedeemCodeAsync(string code, int userId, int? eventId)
+    {
+        var paymentCode = await _db.PaymentCodes
+            .Include(item => item.Event)
+            .FirstOrDefaultAsync(item => item.Code == code)
+            ?? throw new InvalidOperationException("Payment code was not found.");
+
+        if (paymentCode.IsRedeemed)
+        {
+            throw new InvalidOperationException("Payment code has already been redeemed.");
+        }
+
+        var resolvedEventId = paymentCode.EventId ?? eventId;
+        if (!resolvedEventId.HasValue || resolvedEventId <= 0)
+        {
+            throw new InvalidOperationException("This payment code is not linked to an event.");
+        }
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new InvalidOperationException("The signed-in user could not be found.");
+        }
+
+        var eventEntity = await _eventRepository.GetByIdAsync(resolvedEventId.Value);
+        if (eventEntity == null)
+        {
+            throw new InvalidOperationException("The event for this payment code could not be found.");
+        }
+
+        var payment = new Payment
+        {
+            UserId = userId,
+            EventId = resolvedEventId.Value,
+            Amount = paymentCode.Amount,
+            PaymentStatus = "Completed",
+            PaymentDate = DateTime.UtcNow
+        };
+
+        await _repository.AddAsync(payment);
+        await EnsureRegistrationStatusAsync(resolvedEventId.Value, userId, "Completed");
+
+        paymentCode.IsRedeemed = true;
+        paymentCode.RedeemedAt = DateTime.UtcNow;
+        paymentCode.PaymentId = payment.PaymentId;
+        paymentCode.EventId = resolvedEventId.Value;
+
+        await _db.SaveChangesAsync();
+
+        return new PaymentCodeRedemptionResponseDto
+        {
+            PaymentId = payment.PaymentId,
+            Code = paymentCode.Code,
+            EventName = paymentCode.EventName ?? eventEntity.Title,
+            Amount = $"KES {payment.Amount:N2}",
+            Reference = $"PAY-{payment.PaymentId:D5}",
+            Status = "Redeemed",
+            RedeemedAt = paymentCode.RedeemedAt ?? DateTime.UtcNow
+        };
+    }
+
+    private async Task EnsureRegistrationStatusAsync(int eventId, int userId, string paymentStatus)
+    {
+        var registration = await _db.EventRegistration
+            .FirstOrDefaultAsync(item => item.EventId == eventId && item.AttendeeId == userId);
+
+        if (registration == null)
+        {
+            registration = new EventRegistration
+            {
+                EventId = eventId,
+                AttendeeId = userId,
+                TicketType = "Standard",
+                PaymentStatus = paymentStatus,
+                RegisteredAt = DateTime.UtcNow
+            };
+
+            _db.EventRegistration.Add(registration);
+        }
+        else
+        {
+            registration.PaymentStatus = paymentStatus;
+        }
+
+        await _db.SaveChangesAsync();
     }
 }

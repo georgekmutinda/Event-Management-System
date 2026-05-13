@@ -10,7 +10,7 @@ namespace EventManagementApi.Controllers
     /// Provides endpoints for retrieving, creating, and deleting roles.
     /// All endpoints return DTOs (never entities) and handle errors appropriately.
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/roles")]
     public class RoleController : ControllerBase

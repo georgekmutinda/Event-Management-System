@@ -1,6 +1,8 @@
 using Application.DTOs;
 using Application.Interfaces;
-using Microsoft.AspNetCore.Mvc;using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 namespace EventManagementApi.Controllers
 {
     /// <summary>
@@ -73,6 +75,17 @@ namespace EventManagementApi.Controllers
             {
                 return StatusCode(500, new { message = $"Error retrieving registrations: {ex.Message}" });
             }
+        }
+
+        [HttpGet("mine")]
+        public async Task<ActionResult<List<EventRegistrationResponseDto>>> GetMyRegistrations()
+        {
+            var userIdClaim = User.FindFirstValue("userId");
+            if (!int.TryParse(userIdClaim, out var userId) || userId <= 0)
+                return Unauthorized(new { message = "Unable to determine the current user." });
+
+            var registrations = await _eventRegistrationService.GetAllAsync();
+            return Ok(registrations.Where(item => item.AttendeeId == userId).ToList());
         }
 
         /// <summary>

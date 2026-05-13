@@ -9,7 +9,7 @@ namespace EventManagementApi.Controllers
     /// API Controller for User Management operations.
     /// Provides endpoints for retrieving, updating, and deleting users.
     /// </summary>
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/users")]
     public class UserController : ControllerBase

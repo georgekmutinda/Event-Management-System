@@ -30,6 +30,10 @@ namespace Domain.Data
         public DbSet<Payment> Payment { get; set; }
         public DbSet<Invitation> Invitation { get; set; }
 
+        public DbSet<BroadcastMessage> BroadcastMessages { get; set; } //for broadcasting sql injection messages
+        public DbSet<PaymentCode>      PaymentCodes      { get; set; } //for the payment codes
+
+
         // =========================
         // MODEL CONFIGURATION
         // =========================
@@ -87,6 +91,11 @@ namespace Domain.Data
 
             modelBuilder.Entity<Event>()
                 .HasKey(e => e.EventId);
+
+            modelBuilder.Entity<Event>()
+                .Property(e => e.TicketPrice)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0m);
 
             modelBuilder.Entity<Event>()
                 .HasOne(e => e.Planner)
@@ -226,6 +235,33 @@ namespace Domain.Data
                 .HasOne(i => i.InvitedByUser)
                 .WithMany()
                 .HasForeignKey(i => i.InvitedByUserId);
+
+            // ── BroadcastMessage ──────────────────────────────────
+            modelBuilder.Entity<BroadcastMessage>(entity =>
+            {
+                entity.HasKey(e => e.MessageId);
+                entity.Property(e => e.Type).HasMaxLength(20).IsRequired();
+                entity.Property(e => e.Text).IsRequired();
+                entity.Property(e => e.SentBy).HasMaxLength(200);
+                entity.Property(e => e.SentAt).IsRequired();
+            });
+ 
+            // ── PaymentCode ───────────────────────────────────────
+            modelBuilder.Entity<PaymentCode>(entity =>
+            {
+                entity.HasKey(e => e.PaymentCodeId);
+                entity.HasIndex(e => e.Code).IsUnique();  // Codes must be unique
+                entity.Property(e => e.Code).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+                entity.Property(e => e.EventName).HasMaxLength(300);
+                entity.Property(e => e.IsRedeemed).HasDefaultValue(false);
+ 
+                entity.HasOne(e => e.Payment)
+                        .WithMany()
+                        .HasForeignKey(e => e.PaymentId)
+                        .IsRequired(false)
+                        .OnDelete(DeleteBehavior.SetNull);
+            });
         }
         
     }
