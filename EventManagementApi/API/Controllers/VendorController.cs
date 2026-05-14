@@ -29,6 +29,7 @@ namespace EventManagementApi.Controllers
         /// Creates a new vendor with the provided details.
         /// Validates that the associated user exists.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<VendorResponseDto>> CreateVendor([FromBody] VendorRequestDto dto)
         {
@@ -110,6 +111,7 @@ namespace EventManagementApi.Controllers
         /// Only provided fields are updated; others remain unchanged.
         /// Validates that the associated user exists if UserId is being changed.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<VendorResponseDto>> UpdateVendor(int id, [FromBody] VendorRequestDto dto)
         {
@@ -141,6 +143,7 @@ namespace EventManagementApi.Controllers
         /// Deletes a vendor by ID.
         /// Returns 200 OK if successful, 404 if vendor not found.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVendor(int id)
         {

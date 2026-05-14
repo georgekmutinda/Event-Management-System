@@ -132,6 +132,7 @@ namespace Application.Services
                 UserId = user.UserId,
                 FullName = user.FullName,
                 Role = primaryRole,
+                ExpiresIn = (int)tokenTtl.TotalSeconds,
                 SessionId = sessionId
             };
         }

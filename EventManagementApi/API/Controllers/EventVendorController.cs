@@ -28,6 +28,7 @@ namespace EventManagementApi.Controllers
         /// Validates that both event and vendor exist.
         /// Prevents duplicate associations.
         /// </summary>
+        [Authorize(Roles = "Planner,Admin")]
         [HttpPost]
         public async Task<ActionResult<EventVendorResponseDto>> LinkVendorToEvent([FromBody] EventVendorRequestDto dto)
         {
@@ -80,6 +81,7 @@ namespace EventManagementApi.Controllers
         /// Deletes an event-vendor association by ID.
         /// Returns 200 OK if successful, 404 if association not found.
         /// </summary>
+        [Authorize(Roles = "Planner,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEventVendor(int id)
         {

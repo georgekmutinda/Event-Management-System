@@ -148,36 +148,46 @@ app.Urls.Add("http://0.0.0.0:5100");
 
 app.UseCors("LocalDev");
 app.UseAuthentication();
-app.Use(async (context, next) =>
+
+var validateSession = builder.Configuration.GetValue<bool>("Security:ValidateSession", true);
+if (validateSession)
 {
-    if (!context.Request.Path.StartsWithSegments("/api") ||
-        context.Request.Path.StartsWithSegments("/api/auth"))
+    app.Use(async (context, next) =>
     {
+        if (!context.Request.Path.StartsWithSegments("/api") ||
+            context.Request.Path.StartsWithSegments("/api/auth"))
+        {
+            await next();
+            return;
+        }
+
+        if (context.User?.Identity?.IsAuthenticated == true)
+        {
+            var sessionId = context.Request.Headers["X-Session-Id"].ToString();
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new { message = "Session header missing. Please sign in again." });
+                return;
+            }
+
+            var redis = context.RequestServices.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
+            if (!await redis.KeyExistsAsync($"session:{sessionId}"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new { message = "Session is no longer active. Please sign in again." });
+                return;
+            }
+        }
+
         await next();
-        return;
-    }
+    });
+}
+else
+{
+    Console.WriteLine("[STARTUP] Session validation middleware is disabled in this environment.");
+}
 
-    if (context.User?.Identity?.IsAuthenticated == true)
-    {
-        var sessionId = context.Request.Headers["X-Session-Id"].ToString();
-        if (string.IsNullOrWhiteSpace(sessionId))
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new { message = "Session header missing. Please sign in again." });
-            return;
-        }
-
-        var redis = context.RequestServices.GetRequiredService<IConnectionMultiplexer>().GetDatabase();
-        if (!await redis.KeyExistsAsync($"session:{sessionId}"))
-        {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new { message = "Session is no longer active. Please sign in again." });
-            return;
-        }
-    }
-
-    await next();
-});
 app.UseAuthorization();
 app.MapControllers();
 

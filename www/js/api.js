@@ -29,6 +29,23 @@ const Auth = (() => {
   };
 })();
 
+function parseLoginResponse(res) {
+  const payload = decodeJwt(res?.token || '');
+  let role = payload?.[ROLE_CLAIM] || payload?.role || res?.role || 'Attendee';
+  if (Array.isArray(role)) role = role[0];
+
+  const fullName = payload?.[NAME_CLAIM] || payload?.name || res?.fullName || '';
+  const email = payload?.[EMAIL_CLAIM] || payload?.email || '';
+  const userId = payload?.userId || res?.userId || null;
+
+  return {
+    id: userId,
+    email,
+    fullName,
+    role
+  };
+}
+
 async function apiFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   if (Auth.token) headers.Authorization = `Bearer ${Auth.token}`;
@@ -63,12 +80,8 @@ const AuthAPI = {
   async login(data) {
     const res = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(data) });
     if (res?.token) {
-      Auth.setSession(res.token, {
-        id: res.userId,
-        email: res.email,
-        fullName: res.fullName,
-        role: res.role
-      }, res.sessionId);
+      const user = parseLoginResponse(res);
+      Auth.setSession(res.token, user, res.sessionId || null);
     }
     return res;
   },
@@ -148,9 +161,12 @@ async function handleLogin() {
 
   try {
     const res = await AuthAPI.login({ email, password });
-    const payload = decodeJwt(res.token);
-    let role = payload?.[ROLE_CLAIM] || payload?.role || res.role || 'Attendee';
-    if (Array.isArray(role)) role = role[0];
+    const role = Auth.user?.role || (() => {
+      const payload = decodeJwt(res.token);
+      let value = payload?.[ROLE_CLAIM] || payload?.role || res.role || 'Attendee';
+      if (Array.isArray(value)) value = value[0];
+      return value;
+    })();
     enterApp(role);
   } catch (err) {
     if (error) error.textContent = err.message || 'Login failed.';
@@ -184,9 +200,12 @@ async function handleRegister() {
   try {
     await AuthAPI.register({ fullName, email, password, roles: [role] });
     const res = await AuthAPI.login({ email, password });
-    const payload = decodeJwt(res.token);
-    let resolvedRole = payload?.[ROLE_CLAIM] || payload?.role || res.role || role;
-    if (Array.isArray(resolvedRole)) resolvedRole = resolvedRole[0];
+    const resolvedRole = Auth.user?.role || (() => {
+      const payload = decodeJwt(res.token);
+      let result = payload?.[ROLE_CLAIM] || payload?.role || res.role || role;
+      if (Array.isArray(result)) result = result[0];
+      return result;
+    })();
     enterApp(resolvedRole);
     showToast('Account created successfully.');
   } catch (err) {

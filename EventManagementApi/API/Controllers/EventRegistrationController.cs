@@ -57,6 +57,7 @@ namespace EventManagementApi.Controllers
         /// Retrieves all event registrations from the system.
         /// Returns empty list if no registrations exist.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<List<EventRegistrationResponseDto>>> GetAllRegistrations()
         {
@@ -121,6 +122,7 @@ namespace EventManagementApi.Controllers
         /// Deletes an event registration by ID.
         /// Returns 200 OK if successful, 404 if registration not found.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRegistration(int id)
         {

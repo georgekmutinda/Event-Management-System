@@ -29,6 +29,7 @@ namespace EventManagementApi.Controllers
         /// Creates a new event with the provided details.
         /// Validates that the planner (user) exists.
         /// </summary>
+        [Authorize(Roles = "Planner,Admin")]
         [HttpPost]
         public async Task<ActionResult<EventResponseDto>> CreateEvent([FromBody] EventRequestDto dto)
         {
@@ -119,6 +120,7 @@ namespace EventManagementApi.Controllers
         /// Only provided fields are updated; others remain unchanged.
         /// Validates that the planner exists if PlannerId is being changed.
         /// </summary>
+        [Authorize(Roles = "Planner,Admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<EventResponseDto>> UpdateEvent(int id, [FromBody] EventRequestDto dto)
         {
@@ -147,6 +149,7 @@ namespace EventManagementApi.Controllers
         /// Deletes an event by ID.
         /// Returns 200 OK if successful, 404 if event not found.
         /// </summary>
+        [Authorize(Roles = "Planner,Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(int id)
         {

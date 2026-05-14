@@ -29,6 +29,7 @@ namespace EventManagementApi.Controllers
     /// Creates a new service provider with the provided details.
     /// Validates that the associated user exists.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<ActionResult<ServiceProviderResponseDto>> CreateServiceProvider([FromBody] CreateServiceProviderDto dto)
     {
@@ -103,6 +104,7 @@ namespace EventManagementApi.Controllers
     /// Updates an existing service provider.
     /// Only updates fields that are provided (supports partial updates).
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<ActionResult<ServiceProviderResponseDto>> UpdateServiceProvider(int id, [FromBody] UpdateServiceProviderDto dto)
     {
@@ -128,6 +130,7 @@ namespace EventManagementApi.Controllers
     /// Deletes a service provider by ID.
     /// Returns 204 No Content on success.
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<StatusCodeResult> DeleteServiceProvider(int id)
     {

@@ -54,6 +54,7 @@ namespace EventManagementApi.Controllers
         /// GET /api/payments
         /// Retrieves all payments from the system.
         /// </summary>
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<ActionResult<List<PaymentResponseDto>>> GetAllPayments()
         {

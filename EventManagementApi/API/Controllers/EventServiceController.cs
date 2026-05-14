@@ -29,6 +29,7 @@ namespace EventManagementApi.Controllers
     /// Creates a new event service linking a service provider to an event.
     /// Validates that both event and service provider exist.
     /// </summary>
+    [Authorize(Roles = "Planner,Admin")]
     [HttpPost]
     public async Task<ActionResult<EventServiceResponseDto>> CreateEventService([FromBody] CreateEventServiceDto dto)
     {
@@ -78,6 +79,7 @@ namespace EventManagementApi.Controllers
     /// Deletes an event service by ID.
     /// Returns 204 No Content on success.
     /// </summary>
+    [Authorize(Roles = "Planner,Admin")]
     [HttpDelete("{id}")]
     public async Task<StatusCodeResult> DeleteEventService(int id)
     {

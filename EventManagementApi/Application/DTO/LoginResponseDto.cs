@@ -12,6 +12,7 @@ namespace Application.DTOs
         public int    UserId    { get; set; }
         public string FullName  { get; set; }
         public string Role      { get; set; }
+        public int    ExpiresIn { get; set; }
 
         /// <summary>
         /// Unique session identifier stored in Redis.
