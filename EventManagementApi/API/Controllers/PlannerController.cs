@@ -78,16 +78,26 @@ namespace EventManagementApi.Controllers
         {
             var plannerId = GetCurrentUserId();
 
-            var vendors = await _db.EventVendor
-                .Where(item => item.Event.PlannerId == plannerId)
-                .GroupBy(item => new { item.VendorId, item.Vendor.BusinessName, item.Vendor.ProductType, item.Vendor.Description })
-                .Select(group => new PlannerVendorDto
+            var vendors = await _db.Vendor
+                .Include(item => item.User)
+                .Select(item => new PlannerVendorDto
                 {
-                    VendorId = group.Key.VendorId,
-                    BusinessName = group.Key.BusinessName,
-                    ProductType = group.Key.ProductType,
-                    Description = group.Key.Description,
-                    EventCount = group.Select(item => item.EventId).Distinct().Count()
+                    VendorId = item.VendorId,
+                    UserId = item.UserId,
+                    BusinessName = item.BusinessName,
+                    ProductType = item.ProductType,
+                    Description = item.Description,
+                    PhotoUrl = item.PhotoUrl,
+                    FullName = item.User.FullName,
+                    Email = item.User.Email,
+                    AverageRating = item.AverageRating,
+                    TotalReviews = item.TotalReviews,
+                    Recommendations = item.Recommendations,
+                    EventCount = item.EventVendors
+                        .Where(ev => ev.Event.PlannerId == plannerId)
+                        .Select(ev => ev.EventId)
+                        .Distinct()
+                        .Count()
                 })
                 .OrderBy(item => item.BusinessName)
                 .ToListAsync();
@@ -100,16 +110,23 @@ namespace EventManagementApi.Controllers
         {
             var plannerId = GetCurrentUserId();
 
-            var providers = await _db.EventService
-                .Where(item => item.Event.PlannerId == plannerId)
-                .GroupBy(item => new { item.ProviderId, item.Provider.CompanyName, item.Provider.ServiceType, item.Provider.Description })
-                .Select(group => new PlannerServiceProviderDto
+            var providers = await _db.ServiceProviderProfile
+                .Include(item => item.User)
+                .Select(item => new PlannerServiceProviderDto
                 {
-                    ProviderId = group.Key.ProviderId,
-                    CompanyName = group.Key.CompanyName,
-                    ServiceType = group.Key.ServiceType,
-                    Description = group.Key.Description,
-                    EventCount = group.Select(item => item.EventId).Distinct().Count()
+                    ProviderId = item.ProviderId,
+                    UserId = item.UserId,
+                    CompanyName = item.CompanyName,
+                    ServiceType = item.ServiceType,
+                    Description = item.Description,
+                    PhotoUrl = item.PhotoUrl,
+                    FullName = item.User.FullName,
+                    Email = item.User.Email,
+                    EventCount = item.EventServices
+                        .Where(es => es.Event.PlannerId == plannerId)
+                        .Select(es => es.EventId)
+                        .Distinct()
+                        .Count()
                 })
                 .OrderBy(item => item.CompanyName)
                 .ToListAsync();

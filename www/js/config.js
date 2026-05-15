@@ -38,7 +38,8 @@ const ROLE_CONFIG = {
           { id: 'events', label: 'My Events', icon: 'calendar' },
           { id: 'registrations', label: 'Paid Attendees', icon: 'users' },
           { id: 'vendors', label: 'Vendors', icon: 'home' },
-          { id: 'service-providers', label: 'Service Providers', icon: 'tool' }
+          { id: 'service-providers', label: 'Service Providers', icon: 'tool' },
+          { id: 'uploads', label: 'Uploads', icon: 'clipboard' }
         ]
       }
     ]
@@ -54,6 +55,7 @@ const ROLE_CONFIG = {
         title: 'Vendor Portal',
         items: [
           { id: 'vendor-dashboard', label: 'My Dashboard', icon: 'grid' },
+          { id: 'browse-events', label: 'Browse Events', icon: 'calendar' },
           { id: 'my-assignments', label: 'Event Assignments', icon: 'calendar' },
           { id: 'vendor-profile', label: 'Vendor Profile', icon: 'home' }
         ]
@@ -71,6 +73,7 @@ const ROLE_CONFIG = {
         title: 'Provider Portal',
         items: [
           { id: 'provider-dashboard', label: 'My Dashboard', icon: 'grid' },
+          { id: 'browse-events', label: 'Browse Events', icon: 'calendar' },
           { id: 'my-services', label: 'Assigned Services', icon: 'tool' },
           { id: 'provider-profile', label: 'Provider Profile', icon: 'user' }
         ]
@@ -125,7 +128,8 @@ const VIEW_TITLES = {
   'vendor-profile': 'Vendor Profile',
   'provider-dashboard': 'Provider Dashboard',
   'my-services': 'Assigned Services',
-  'provider-profile': 'Provider Profile'
+  'provider-profile': 'Provider Profile',
+  uploads: 'Uploads'
 };
 
 const ACTION_LABELS = {
@@ -143,7 +147,8 @@ const ACTION_LABELS = {
   'vendor-profile': '',
   'provider-dashboard': '',
   'my-services': '',
-  'provider-profile': ''
+  'provider-profile': '',
+  uploads: '+ Upload File'
 };
 
 const MODAL_TITLES_MAP = {

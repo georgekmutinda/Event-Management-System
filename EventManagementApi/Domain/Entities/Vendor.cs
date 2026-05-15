@@ -23,6 +23,10 @@ namespace Domain.Entities
         public string BusinessName { get; set; }
         public string ProductType { get; set; }
         public string Description { get; set; }
+        public string? PhotoUrl { get; set; }
+        public decimal AverageRating { get; set; } = 0;
+        public int TotalReviews { get; set; } = 0;
+        public string? Recommendations { get; set; }
 
         /// <summary>
         /// Collection of event-vendor associations (plural for one-to-many relationship)

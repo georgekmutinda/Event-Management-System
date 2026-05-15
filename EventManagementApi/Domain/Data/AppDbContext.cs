@@ -114,7 +114,8 @@ namespace Domain.Data
             modelBuilder.Entity<EventRegistration>()
                 .HasOne(er => er.Event)
                 .WithMany(e => e.Registrations)
-                .HasForeignKey(er => er.EventId);
+                .HasForeignKey(er => er.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<EventRegistration>()
                 .HasOne(er => er.Attendee)
@@ -134,6 +135,15 @@ namespace Domain.Data
 
             modelBuilder.Entity<Vendor>()
                 .HasKey(v => v.VendorId);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(v => v.AverageRating)
+                .HasPrecision(18, 2)
+                .HasDefaultValue(0m);
+
+            modelBuilder.Entity<Vendor>()
+                .Property(v => v.TotalReviews)
+                .HasDefaultValue(0);
 
             modelBuilder.Entity<Vendor>()
                 .HasOne(v => v.User)
@@ -166,7 +176,8 @@ namespace Domain.Data
             modelBuilder.Entity<EventVendor>()
                 .HasOne(ev => ev.Event)
                 .WithMany(e => e.EventVendors)
-                .HasForeignKey(ev => ev.EventId);
+                .HasForeignKey(ev => ev.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<EventVendor>()
                 .HasOne(ev => ev.Vendor)
@@ -190,7 +201,8 @@ namespace Domain.Data
             modelBuilder.Entity<EventService>()
                 .HasOne(es => es.Event)
                 .WithMany(e => e.EventServices)
-                .HasForeignKey(es => es.EventId);
+                .HasForeignKey(es => es.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<EventService>()
                 .HasOne(es => es.Provider)
@@ -214,7 +226,8 @@ namespace Domain.Data
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.Event)
                 .WithMany(e => e.Payments)
-                .HasForeignKey(p => p.EventId);
+                .HasForeignKey(p => p.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // =========================
             // INVITATION
@@ -229,7 +242,8 @@ namespace Domain.Data
                 .HasOne(i => i.Event)
                 .WithMany()
                 .HasForeignKey(i => i.EventId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Invitation>()
                 .HasOne(i => i.InvitedByUser)
@@ -256,6 +270,12 @@ namespace Domain.Data
                 entity.Property(e => e.EventName).HasMaxLength(300);
                 entity.Property(e => e.IsRedeemed).HasDefaultValue(false);
  
+                entity.HasOne(e => e.Event)
+                        .WithMany()
+                        .HasForeignKey(e => e.EventId)
+                        .IsRequired(false)
+                        .OnDelete(DeleteBehavior.SetNull);
+
                 entity.HasOne(e => e.Payment)
                         .WithMany()
                         .HasForeignKey(e => e.PaymentId)

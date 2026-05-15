@@ -180,6 +180,222 @@
 
 .vendor-cat-sub { font-size: 13px; color: var(--muted); }
 
+.vendor-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.vendor-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.vendor-card-photo {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+  background: var(--surface);
+}
+
+.vendor-photo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px;
+  color: var(--gold);
+  background: rgba(191, 184, 158, 0.08);
+}
+
+.vendor-card-body { padding: 18px; }
+
+.vendor-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.vendor-card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.vendor-card-meta,
+.vendor-profile-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.vendor-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold);
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.vendor-rating strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.vendor-rating em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.vendor-card-description {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.vendor-recommendations {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.vendor-recommendations.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.vendor-recommendation {
+  border-left: 2px solid rgba(191, 184, 158, 0.35);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+  padding-left: 10px;
+}
+
+.vendor-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.marketplace-event-select {
+  min-width: 190px;
+  flex: 1 1 190px;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.vendor-profile-hero {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.vendor-profile-photo {
+  width: 118px;
+  height: 118px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.vendor-profile-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.account-profile-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.account-profile-main,
+.account-profile-side {
+  display: grid;
+  gap: 16px;
+}
+
+.account-profile-hero {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+}
+
+.account-profile-copy {
+  min-width: 0;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.profile-card,
+.profile-side-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.profile-card .field-label,
+.profile-side-card .field-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 9px;
+}
+
+.profile-card .field-value,
+.profile-side-card .field-value {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.profile-side-card p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.profile-upload-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
+}
+
 /* ═══ ROLE CARDS ═══ */
 .role-card {
   background: var(--panel);
@@ -244,6 +460,27 @@
 
 .portal-hero-actions { display: flex; gap: 10px; }
 
+.portal-note {
+  color: var(--gold);
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.portal-empty-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 24px;
+}
+
+.portal-empty-panel p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+
 /* ═══ INFO CARD (profile views) ═══ */
 .info-card {
   background: var(--panel);
@@ -280,5 +517,9 @@
 
 @media (max-width: 900px) {
   .cards-grid  { grid-template-columns: 1fr; }
+  .vendor-card-grid { grid-template-columns: 1fr; }
   .dash-two-col { grid-template-columns: 1fr; }
+  .account-profile-shell { grid-template-columns: 1fr; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .account-profile-hero { align-items: flex-start; }
 }

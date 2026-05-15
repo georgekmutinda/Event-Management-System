@@ -66,6 +66,8 @@ services:
       JwtSettings__Audience: EventManagementUsers
     ports:
       - "5100:5100"
+    volumes:
+      - ./EventManagementApi/Uploads:/app/Uploads
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:5100/api/auth/login || exit 1"]
       interval: 20s

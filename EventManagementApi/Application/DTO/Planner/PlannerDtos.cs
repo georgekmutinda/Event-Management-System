@@ -29,18 +29,29 @@ namespace Application.DTOs
     public class PlannerVendorDto
     {
         public int VendorId { get; set; }
+        public int UserId { get; set; }
         public string BusinessName { get; set; } = string.Empty;
         public string ProductType { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? PhotoUrl { get; set; }
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public decimal AverageRating { get; set; }
+        public int TotalReviews { get; set; }
+        public string? Recommendations { get; set; }
         public int EventCount { get; set; }
     }
 
     public class PlannerServiceProviderDto
     {
         public int ProviderId { get; set; }
+        public int UserId { get; set; }
         public string CompanyName { get; set; } = string.Empty;
         public string ServiceType { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? PhotoUrl { get; set; }
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
         public int EventCount { get; set; }
     }
 }

@@ -32,6 +32,8 @@ namespace Application.Interfaces
         /// </summary>
         Task<VendorResponseDto> UpdateAsync(int id, VendorRequestDto dto);
 
+        Task<VendorResponseDto> RateAsync(int id, VendorRatingRequestDto dto);
+
         /// <summary>
         /// Deletes a vendor by ID.
         /// Returns true if successful, false if vendor not found.

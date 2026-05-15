@@ -7,6 +7,7 @@ using Infrastructure.SeedData;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
@@ -29,7 +30,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseNpgsql(connString);
+    options.UseNpgsql(connString)
+        .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -128,6 +130,17 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE "Event"
         ADD COLUMN IF NOT EXISTS "TicketPrice" numeric(18,2) NOT NULL DEFAULT 0;
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE "Vendor"
+        ADD COLUMN IF NOT EXISTS "PhotoUrl" text NULL,
+        ADD COLUMN IF NOT EXISTS "AverageRating" numeric(18,2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS "TotalReviews" integer NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS "Recommendations" text NULL;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE "ServiceProviderProfile"
+        ADD COLUMN IF NOT EXISTS "PhotoUrl" text NULL;
+        """);
     await RoleSeeder.SeedAsync(db);
     await ComprehensiveSeeder.SeedAsync(db);
 }
@@ -145,6 +158,14 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.Urls.Add("http://0.0.0.0:5100");
+
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "Uploads");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
 
 app.UseCors("LocalDev");
 app.UseAuthentication();

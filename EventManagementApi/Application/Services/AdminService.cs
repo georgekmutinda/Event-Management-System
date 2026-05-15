@@ -125,7 +125,9 @@ namespace Application.Services
                 UserId = user.UserId,
                 BusinessName = request.BusinessName.Trim(),
                 ProductType = string.IsNullOrWhiteSpace(request.ProductType) ? "General" : request.ProductType.Trim(),
-                Description = request.Description?.Trim() ?? string.Empty
+                Description = request.Description?.Trim() ?? string.Empty,
+                PhotoUrl = string.IsNullOrWhiteSpace(request.PhotoUrl) ? null : request.PhotoUrl.Trim(),
+                Recommendations = string.IsNullOrWhiteSpace(request.Recommendations) ? null : request.Recommendations.Trim()
             };
 
             _db.Vendor.Add(vendor);

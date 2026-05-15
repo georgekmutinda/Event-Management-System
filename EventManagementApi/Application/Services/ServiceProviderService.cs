@@ -97,6 +97,9 @@ public class ServiceProviderService : IServiceProviderService
         if (!string.IsNullOrWhiteSpace(dto.Description))
             provider.Description = dto.Description;
 
+        if (dto.PhotoUrl != null)
+            provider.PhotoUrl = string.IsNullOrWhiteSpace(dto.PhotoUrl) ? null : dto.PhotoUrl;
+
         // 3. Save changes
         await _repository.UpdateAsync(provider);
 

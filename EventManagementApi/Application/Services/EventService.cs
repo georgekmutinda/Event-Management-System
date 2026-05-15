@@ -1,8 +1,10 @@
 using AutoMapper;
 using Application.DTOs;
 using Application.Interfaces;
+using Domain.Data;
 using Domain.Entities;
 using Infrastructure.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
@@ -16,12 +18,14 @@ namespace Application.Services
         private readonly IEventRepository _eventRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly AppDbContext _context;
 
-        public EventService(IEventRepository eventRepository, IUserRepository userRepository, IMapper mapper)
+        public EventService(IEventRepository eventRepository, IUserRepository userRepository, IMapper mapper, AppDbContext context)
         {
             _eventRepository = eventRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _context = context;
         }
 
         /// <summary>
@@ -41,6 +45,8 @@ namespace Application.Services
 
             if (string.IsNullOrWhiteSpace(dto.Location))
                 throw new Exception("Event location is required");
+
+            dto.EventDate = NormalizeUtc(dto.EventDate);
 
             // Map DTO to entity
             var eventEntity = _mapper.Map<Event>(dto);
@@ -107,7 +113,7 @@ namespace Application.Services
                 eventEntity.Location = dto.Location;
 
             if (dto.EventDate != default(DateTime))
-                eventEntity.EventDate = dto.EventDate;
+                eventEntity.EventDate = NormalizeUtc(dto.EventDate);
 
             eventEntity.PlannerId = dto.PlannerId;
 
@@ -121,16 +127,66 @@ namespace Application.Services
         /// <summary>
         /// Deletes an event by ID.
         /// Returns true if successful, false if event not found.
+        /// Ensures child registrations, vendor assignments, services, payments, and invitations are removed first.
         /// </summary>
         public async Task<bool> DeleteEventAsync(int id)
         {
             var eventEntity = await _eventRepository.GetByIdAsync(id);
-            
             if (eventEntity == null)
                 return false;
 
-            await _eventRepository.DeleteAsync(eventEntity);
-            return true;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var registrations = await _context.EventRegistration
+                    .Where(r => r.EventId == id)
+                    .ToListAsync();
+                _context.EventRegistration.RemoveRange(registrations);
+
+                var eventVendors = await _context.EventVendor
+                    .Where(ev => ev.EventId == id)
+                    .ToListAsync();
+                _context.EventVendor.RemoveRange(eventVendors);
+
+                var eventServices = await _context.EventService
+                    .Where(es => es.EventId == id)
+                    .ToListAsync();
+                _context.EventService.RemoveRange(eventServices);
+
+                var payments = await _context.Payment
+                    .Where(p => p.EventId == id)
+                    .ToListAsync();
+                _context.Payment.RemoveRange(payments);
+
+                var invitations = await _context.Invitation
+                    .Where(i => i.EventId == id)
+                    .ToListAsync();
+                _context.Invitation.RemoveRange(invitations);
+
+                await _context.SaveChangesAsync();
+                await _eventRepository.DeleteAsync(eventEntity);
+                await transaction.CommitAsync();
+
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        private static DateTime NormalizeUtc(DateTime value)
+        {
+            if (value == default)
+                return value;
+
+            return value.Kind switch
+            {
+                DateTimeKind.Utc => value,
+                DateTimeKind.Local => value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(value, DateTimeKind.Local).ToUniversalTime()
+            };
         }
     }
 }

@@ -165,6 +165,11 @@ window.handleTopbarAction = function () {
     return;
   }
 
+  if (currentView === 'uploads' && typeof handleUploadFile === 'function') {
+    handleUploadFile();
+    return;
+  }
+
   window.showToast('No quick action is available on this screen.');
 };
 

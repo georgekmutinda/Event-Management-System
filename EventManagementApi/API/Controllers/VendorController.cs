@@ -62,13 +62,7 @@ namespace EventManagementApi.Controllers
         {
             try
             {
-                const string cacheKey = "vendors:all";
-                var cachedVendors = await _cacheService.GetAsync<List<VendorResponseDto>>(cacheKey);
-                if (cachedVendors != null)
-                    return Ok(cachedVendors);
-                
                 var vendors = await _vendorService.GetAllAsync();
-                await _cacheService.SetAsync(cacheKey, vendors, TimeSpan.FromMinutes(30));
                 return Ok(vendors);
             }
             catch (Exception ex)
@@ -135,6 +129,28 @@ namespace EventManagementApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(400, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/ratings")]
+        public async Task<ActionResult<VendorResponseDto>> RateVendor(int id, [FromBody] VendorRatingRequestDto dto)
+        {
+            if (id <= 0)
+                return BadRequest(new { message = "Valid vendor ID is required" });
+
+            if (dto == null)
+                return BadRequest(new { message = "Rating request is required" });
+
+            try
+            {
+                var vendor = await _vendorService.RateAsync(id, dto);
+                await _cacheService.RemoveAsync($"vendors:{id}");
+                await _cacheService.RemoveAsync("vendors:all");
+                return Ok(vendor);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
 

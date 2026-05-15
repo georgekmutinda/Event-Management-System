@@ -19,16 +19,30 @@ namespace Application.DTOs
         /// <summary>
         /// The business name of the vendor.
         /// </summary>
-        public string BusinessName { get; set; }
+        public string BusinessName { get; set; } = string.Empty;
 
         /// <summary>
         /// The type of product or service offered by the vendor.
         /// </summary>
-        public string ProductType { get; set; }
+        public string ProductType { get; set; } = string.Empty;
 
         /// <summary>
         /// A description of the vendor's business and services.
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
+
+        public string? PhotoUrl { get; set; }
+
+        public decimal AverageRating { get; set; }
+
+        public int TotalReviews { get; set; }
+
+        public string? Recommendations { get; set; }
+    }
+
+    public class VendorRatingRequestDto
+    {
+        public int Rating { get; set; }
+        public string? Recommendation { get; set; }
     }
 }

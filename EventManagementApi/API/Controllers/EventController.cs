@@ -2,6 +2,7 @@ using Application.DTOs;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace EventManagementApi.Controllers
 {
@@ -39,6 +40,15 @@ namespace EventManagementApi.Controllers
 
             try
             {
+                if (User.IsInRole("Planner"))
+                {
+                    var currentUserId = GetCurrentUserId();
+                    if (currentUserId <= 0)
+                        return Unauthorized(new { message = "Planner account could not be resolved. Please sign in again." });
+
+                    dto.PlannerId = currentUserId;
+                }
+
                 var createdEvent = await _eventService.CreateEventAsync(dto);
                 
                 // Invalidate the events list cache
@@ -50,6 +60,12 @@ namespace EventManagementApi.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        private int GetCurrentUserId()
+        {
+            var value = User.FindFirstValue("userId");
+            return int.TryParse(value, out var userId) ? userId : 0;
         }
 
         /// <summary>

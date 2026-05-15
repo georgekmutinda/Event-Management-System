@@ -23,6 +23,7 @@ namespace Domain.Entities
         public string ServiceType { get; set; }
         public string CompanyName { get; set; }
         public string Description { get; set; }
+        public string? PhotoUrl { get; set; }
 
         /// <summary>
         /// Collection of event-service associations (plural for one-to-many relationship)

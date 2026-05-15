@@ -47,7 +47,10 @@ function parseLoginResponse(res) {
 }
 
 async function apiFetch(path, options = {}) {
-  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const headers = { ...(options.headers || {}) };
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
   if (Auth.token) headers.Authorization = `Bearer ${Auth.token}`;
   if (Auth.sessionId) headers['X-Session-Id'] = Auth.sessionId;
 
@@ -67,7 +70,13 @@ async function apiFetch(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(body?.message || body?.title || `HTTP ${response.status}`);
+    const validationMessage = body?.errors
+      ? Object.values(body.errors).flat().filter(Boolean).join(' ')
+      : '';
+    const error = new Error(body?.message || validationMessage || body?.title || `HTTP ${response.status}`);
+    error.status = response.status;
+    error.body = body;
+    throw error;
   }
 
   return body;
@@ -102,8 +111,18 @@ const RegistrationsAPI = {
   create: data => apiFetch('/event-registrations', { method: 'POST', body: JSON.stringify(data) })
 };
 
+const EventVendorsAPI = {
+  create: data => apiFetch('/event-vendors', { method: 'POST', body: JSON.stringify(data) })
+};
+
 const VendorsAPI = {
-  getAll: () => apiFetch('/vendors')
+  getAll: () => apiFetch('/vendors'),
+  update: (id, payload) => apiFetch(`/vendors/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  rate: (id, payload) => apiFetch(`/vendors/${id}/ratings`, { method: 'POST', body: JSON.stringify(payload) })
+};
+
+const EventServicesAPI = {
+  create: data => apiFetch('/event-services', { method: 'POST', body: JSON.stringify(data) })
 };
 
 const ServiceProvidersAPI = {
@@ -117,11 +136,36 @@ const PaymentsAPI = {
   redeemCode: payload => apiFetch('/payments/redeem', { method: 'POST', body: JSON.stringify(payload) })
 };
 
+const FilesAPI = {
+  upload: file => {
+    if (!file) throw new Error('A file must be selected to upload.');
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch('/files/upload', { method: 'POST', body: formData });
+  }
+};
+
 const PlannerAPI = {
   getEvents: () => apiFetch('/planner/events'),
   getPaidRegistrations: () => apiFetch('/planner/paid-registrations'),
   getVendors: () => apiFetch('/planner/vendors'),
   getServiceProviders: () => apiFetch('/planner/service-providers')
+};
+
+const VendorPortalAPI = {
+  getDashboard: () => apiFetch('/portal/vendor/dashboard'),
+  getAssignments: () => apiFetch('/portal/vendor/assignments'),
+  getProfile: () => apiFetch('/portal/vendor/profile'),
+  updatePhoto: photoUrl => apiFetch('/portal/vendor/profile/photo', { method: 'PUT', body: JSON.stringify({ photoUrl }) }),
+  bid: eventId => apiFetch('/portal/vendor/bids', { method: 'POST', body: JSON.stringify({ eventId }) })
+};
+
+const ProviderPortalAPI = {
+  getDashboard: () => apiFetch('/portal/provider/dashboard'),
+  getServices: () => apiFetch('/portal/provider/services'),
+  getProfile: () => apiFetch('/portal/provider/profile'),
+  updatePhoto: photoUrl => apiFetch('/portal/provider/profile/photo', { method: 'PUT', body: JSON.stringify({ photoUrl }) }),
+  bid: (eventId, serviceDetails) => apiFetch('/portal/provider/bids', { method: 'POST', body: JSON.stringify({ eventId, serviceDetails }) })
 };
 
 const AdminAPI = {
@@ -324,6 +368,8 @@ window.handleLogin = handleLogin;
 window.handleRegister = handleRegister;
 window.submitEventForm = submitEventForm;
 window.processPaymentAPI = processPaymentAPI;
+window.handleUploadFile = handleUploadFile;
+window.handleRateVendor = handleRateVendor;
 window.refreshCurrentView = refreshCurrentView;
 window.performDelete = performDelete;
 window.ensureRegistrationForEvent = ensureRegistrationForEvent;
@@ -332,9 +378,86 @@ window.API = {
   AuthAPI,
   EventsAPI,
   RegistrationsAPI,
+  EventVendorsAPI,
   VendorsAPI,
+  EventServicesAPI,
   ServiceProvidersAPI,
   PaymentsAPI,
+  FilesAPI,
   PlannerAPI,
+  VendorPortalAPI,
+  ProviderPortalAPI,
   AdminAPI
 };
+
+async function handleUploadFile() {
+  const fileInput = document.getElementById('upload-file-input');
+  const feedback = document.getElementById('upload-feedback');
+  if (!fileInput || !feedback) return;
+
+  feedback.style.display = 'none';
+  feedback.innerHTML = '';
+
+  const file = fileInput.files?.[0];
+  if (!file) {
+    feedback.style.display = 'block';
+    feedback.innerHTML = `<div class="empty-title" style="color:#e74c3c">Please select a file before uploading.</div>`;
+    return;
+  }
+
+  const button = document.getElementById('upload-file-button');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Uploading...';
+  }
+
+  try {
+    const result = await FilesAPI.upload(file);
+    window.uploadedFiles = window.uploadedFiles || [];
+    window.uploadedFiles.unshift(result);
+    if (window.uploadedFiles.length > 5) window.uploadedFiles.length = 5;
+
+    feedback.style.display = 'block';
+    feedback.innerHTML = `
+      <div class="empty-title">File uploaded successfully.</div>
+      <div style="margin-top:10px"><a href="${result.url}" target="_blank" rel="noopener">${escapeHtml(result.fileName)}</a></div>
+    `;
+
+    const container = document.getElementById('view-uploads-body');
+    if (container && typeof renderUploads === 'function') {
+      renderUploads(container);
+    }
+  } catch (err) {
+    feedback.style.display = 'block';
+    feedback.innerHTML = `<div class="empty-title" style="color:#e74c3c">${escapeHtml(err.message || 'Upload failed.')}</div>`;
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Upload File';
+    }
+  }
+}
+
+async function handleRateVendor(vendorId, vendorName) {
+  const ratingValue = prompt(`Rate ${vendorName} from 1 to 5`);
+  if (ratingValue === null) return;
+
+  const rating = Number(ratingValue);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    showToast('Please enter a whole number from 1 to 5.');
+    return;
+  }
+
+  const recommendation = prompt('Add a short recommendation');
+
+  try {
+    await VendorsAPI.rate(vendorId, {
+      rating,
+      recommendation: recommendation || ''
+    });
+    showToast('Vendor rating saved.');
+    refreshCurrentView();
+  } catch (err) {
+    showToast(err.message || 'Unable to save rating.');
+  }
+}

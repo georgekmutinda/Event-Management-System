@@ -65,8 +65,28 @@ namespace Infrastructure.SeedData
                 var emma = users.First(u => u.Email == "emma.vendor@example.com");
                 var vendors = new List<Vendor>
                 {
-                    new() { UserId = bob.UserId, BusinessName = "Gourmet Catering Co.", ProductType = "Catering", Description = "Premium catering services for all events" },
-                    new() { UserId = emma.UserId, BusinessName = "ProPhoto Studio", ProductType = "Photography", Description = "Professional photography and videography" }
+                    new()
+                    {
+                        UserId = bob.UserId,
+                        BusinessName = "Gourmet Catering Co.",
+                        ProductType = "Catering",
+                        Description = "Premium catering services for all events",
+                        PhotoUrl = "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80",
+                        AverageRating = 4.8m,
+                        TotalReviews = 24,
+                        Recommendations = "Beautiful presentation and reliable timing.\nExcellent menu planning for corporate events."
+                    },
+                    new()
+                    {
+                        UserId = emma.UserId,
+                        BusinessName = "ProPhoto Studio",
+                        ProductType = "Photography",
+                        Description = "Professional photography and videography",
+                        PhotoUrl = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80",
+                        AverageRating = 4.6m,
+                        TotalReviews = 18,
+                        Recommendations = "Strong event coverage with polished editing.\nGreat at capturing candid guest moments."
+                    }
                 };
 
                 await context.Vendor.AddRangeAsync(vendors);

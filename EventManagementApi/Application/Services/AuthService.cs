@@ -79,6 +79,28 @@ namespace Application.Services
                 });
             }
 
+            if (roles.Any(role => role.RoleName == "Vendor"))
+            {
+                _db.Vendor.Add(new Vendor
+                {
+                    UserId = user.UserId,
+                    BusinessName = string.IsNullOrWhiteSpace(user.FullName) ? "Vendor Workspace" : user.FullName,
+                    ProductType = "General",
+                    Description = "Vendor profile pending setup."
+                });
+            }
+
+            if (roles.Any(role => role.RoleName == "ServiceProvider"))
+            {
+                _db.ServiceProviderProfile.Add(new ServiceProviderProfile
+                {
+                    UserId = user.UserId,
+                    CompanyName = string.IsNullOrWhiteSpace(user.FullName) ? "Service Provider Workspace" : user.FullName,
+                    ServiceType = "General",
+                    Description = "Service provider profile pending setup."
+                });
+            }
+
             await _db.SaveChangesAsync();
         }
 

@@ -59,13 +59,7 @@ namespace EventManagementApi.Controllers
     {
         try
         {
-            const string cacheKey = "service-providers:all";
-            var cachedProviders = await _cacheService.GetAsync<List<ServiceProviderResponseDto>>(cacheKey);
-            if (cachedProviders != null)
-                return Ok(cachedProviders);
-            
             var providers = await _service.GetAllAsync();
-            await _cacheService.SetAsync(cacheKey, providers, TimeSpan.FromMinutes(30));
             return Ok(providers);
         }
         catch (Exception ex)

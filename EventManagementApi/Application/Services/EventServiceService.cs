@@ -1,8 +1,10 @@
 using AutoMapper;
 using Application.DTOs;
 using Application.Interfaces;
+using Domain.Data;
 using Domain.Entities;
 using Infrastructure.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
@@ -17,17 +19,20 @@ namespace Application.Services
         private readonly IEventRepository _eventRepository;
         private readonly IServiceProviderRepository _providerRepository;
         private readonly IMapper _mapper;
+        private readonly AppDbContext _db;
 
         public EventServiceService(
             IEventServiceRepository repository,
             IEventRepository eventRepository,
             IServiceProviderRepository providerRepository,
-            IMapper mapper)
+            IMapper mapper,
+            AppDbContext db)
         {
             _repository = repository;
             _eventRepository = eventRepository;
             _providerRepository = providerRepository;
             _mapper = mapper;
+            _db = db;
         }
 
         /// <summary>
@@ -45,6 +50,11 @@ namespace Application.Services
             var provider = await _providerRepository.GetByIdAsync(dto.ProviderId);
             if (provider == null)
                 throw new Exception($"Service provider with ID '{dto.ProviderId}' not found");
+
+            var alreadyLinked = await _db.EventService
+                .AnyAsync(item => item.EventId == dto.EventId && item.ProviderId == dto.ProviderId);
+            if (alreadyLinked)
+                throw new Exception($"Service provider with ID '{dto.ProviderId}' is already associated with Event with ID '{dto.EventId}'");
 
             // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.ServiceDetails))

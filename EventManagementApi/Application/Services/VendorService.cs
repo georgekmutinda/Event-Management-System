@@ -103,12 +103,44 @@ namespace Application.Services
             if (!string.IsNullOrWhiteSpace(dto.Description))
                 vendor.Description = dto.Description;
 
+            if (dto.PhotoUrl != null)
+                vendor.PhotoUrl = string.IsNullOrWhiteSpace(dto.PhotoUrl) ? null : dto.PhotoUrl.Trim();
+
+            if (dto.Recommendations != null)
+                vendor.Recommendations = string.IsNullOrWhiteSpace(dto.Recommendations) ? null : dto.Recommendations.Trim();
+
             vendor.UserId = dto.UserId;
 
             // 4. Save changes
             await _vendorRepository.UpdateAsync(vendor);
 
             // 5. Return updated vendor as DTO
+            return _mapper.Map<VendorResponseDto>(vendor);
+        }
+
+        public async Task<VendorResponseDto> RateAsync(int id, VendorRatingRequestDto dto)
+        {
+            var vendor = await _vendorRepository.GetByIdAsync(id);
+
+            if (vendor == null)
+                throw new Exception($"Vendor with ID '{id}' not found");
+
+            if (dto.Rating < 1 || dto.Rating > 5)
+                throw new Exception("Rating must be between 1 and 5");
+
+            var totalScore = vendor.AverageRating * vendor.TotalReviews;
+            vendor.TotalReviews += 1;
+            vendor.AverageRating = Math.Round((totalScore + dto.Rating) / vendor.TotalReviews, 2);
+
+            if (!string.IsNullOrWhiteSpace(dto.Recommendation))
+            {
+                var recommendation = dto.Recommendation.Trim();
+                vendor.Recommendations = string.IsNullOrWhiteSpace(vendor.Recommendations)
+                    ? recommendation
+                    : $"{vendor.Recommendations}\n{recommendation}";
+            }
+
+            await _vendorRepository.UpdateAsync(vendor);
             return _mapper.Map<VendorResponseDto>(vendor);
         }
 

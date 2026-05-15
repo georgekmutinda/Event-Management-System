@@ -139,7 +139,16 @@ function renderAdminPanel() {
           <div class="auth-field"><label>Password</label><input id="admin-vendor-password" class="form-control" type="password" placeholder="Minimum 8 characters"></div>
           <div class="auth-field"><label>Business Name</label><input id="admin-vendor-business" class="form-control" placeholder="Business name"></div>
           <div class="auth-field"><label>Product Type</label><input id="admin-vendor-type" class="form-control" placeholder="Catering, Decor, Photography"></div>
+          <div class="auth-field"><label>Photo URL</label><input id="admin-vendor-photo" class="form-control" placeholder="https://..."></div>
+          <div class="auth-field">
+            <label>Upload Photo</label>
+            <div style="display:flex;gap:8px">
+              <input id="admin-vendor-photo-file" class="form-control" type="file" accept="image/*">
+              <button class="topbar-btn btn-ghost" style="white-space:nowrap" onclick="uploadAdminVendorPhoto()">Upload</button>
+            </div>
+          </div>
           <div class="auth-field"><label>Description</label><textarea id="admin-vendor-description" class="form-control" rows="3"></textarea></div>
+          <div class="auth-field"><label>Recommendations</label><textarea id="admin-vendor-recommendations" class="form-control" rows="3"></textarea></div>
           <button class="pay-btn" onclick="registerVendorAccount()">Register Vendor</button>
         </div>
         <div class="info-card">
@@ -262,7 +271,9 @@ window.registerVendorAccount = async function () {
     password: document.getElementById('admin-vendor-password')?.value,
     businessName: document.getElementById('admin-vendor-business')?.value?.trim(),
     productType: document.getElementById('admin-vendor-type')?.value?.trim(),
-    description: document.getElementById('admin-vendor-description')?.value?.trim()
+    photoUrl: document.getElementById('admin-vendor-photo')?.value?.trim(),
+    description: document.getElementById('admin-vendor-description')?.value?.trim(),
+    recommendations: document.getElementById('admin-vendor-recommendations')?.value?.trim()
   };
 
   await API.AdminAPI.registerVendor(payload);
@@ -286,9 +297,28 @@ window.registerServiceProviderAccount = async function () {
 };
 
 function clearAdminVendorForm() {
-  ['admin-vendor-name', 'admin-vendor-email', 'admin-vendor-password', 'admin-vendor-business', 'admin-vendor-type', 'admin-vendor-description']
+  ['admin-vendor-name', 'admin-vendor-email', 'admin-vendor-password', 'admin-vendor-business', 'admin-vendor-type', 'admin-vendor-photo', 'admin-vendor-photo-file', 'admin-vendor-description', 'admin-vendor-recommendations']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 }
+
+window.uploadAdminVendorPhoto = async function () {
+  const input = document.getElementById('admin-vendor-photo-file');
+  const photoUrl = document.getElementById('admin-vendor-photo');
+  const file = input?.files?.[0];
+
+  if (!file) {
+    showToast('Choose a photo first.');
+    return;
+  }
+
+  try {
+    const result = await API.FilesAPI.upload(file);
+    if (photoUrl) photoUrl.value = result.url;
+    showToast('Photo uploaded.');
+  } catch (err) {
+    showToast(err.message || 'Photo upload failed.');
+  }
+};
 
 function clearAdminProviderForm() {
   ['admin-provider-name', 'admin-provider-email', 'admin-provider-password', 'admin-provider-company', 'admin-provider-type', 'admin-provider-description']

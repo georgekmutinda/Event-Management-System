@@ -34,6 +34,8 @@ namespace Application.DTOs
         public string BusinessName { get; set; } = string.Empty;
         public string ProductType { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? PhotoUrl { get; set; }
+        public string? Recommendations { get; set; }
     }
 
     public class AdminRegisterServiceProviderDto
