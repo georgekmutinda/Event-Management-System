@@ -1,4 +1,4 @@
-namespace EventSecurityAPI.Models
+namespace EventManagementApi.Security.Models
 {
         public class SqlPrediction
     {

@@ -1,23 +1,32 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.ML;
-using EventSecurityAPI.Models;
+using EventManagementApi.Security.Models;
 
-namespace EventSecurityAPI.Middleware;
+namespace EventManagementApi.Security.Middleware;
 
 public class InjectionMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly PredictionEngine<EventSecurityAPI.Models.SqlData, EventSecurityAPI.Models.SqlPrediction> _predictor;
+    private readonly IServiceProvider _services;
 
-    public InjectionMiddleware(RequestDelegate next, PredictionEngine<EventSecurityAPI.Models.SqlData, EventSecurityAPI.Models.SqlPrediction> predictor)
+    public InjectionMiddleware(RequestDelegate next, IServiceProvider services)
     {
         _next = next;
-        _predictor = predictor;     
+        _services = services;
     }
 
     public async Task InvokeAsync(HttpContext context)  
     {
+        if (HttpMethods.IsGet(context.Request.Method) ||
+            HttpMethods.IsHead(context.Request.Method) ||
+            HttpMethods.IsOptions(context.Request.Method) ||
+            context.Request.HasFormContentType)
+        {
+            await _next(context);
+            return;
+        }
+
         // Read request body
         context.Request.EnableBuffering();
 
@@ -39,7 +48,7 @@ public class InjectionMiddleware
         }
         //Feature Extraction
         var features = ExtractFeatures(body);
-        var data = new EventSecurityAPI.Models.SqlData
+        var data = new EventManagementApi.Security.Models.SqlData
         {
             ContainsOr = features.ContainsOr,
             ContainsUnion = features.ContainsUnion,
@@ -48,13 +57,16 @@ public class InjectionMiddleware
             QueryLength = features.QueryLength
         };
 
-        //ML Prediction
-        var prediction = _predictor.Predict(data);
-        
-        if(prediction.Prediction && prediction.Probability > 0.7){
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync("SQL Injection detected by ML.");
-            return;
+        if (features.ContainsOr == 1 || features.ContainsUnion == 1 || features.ContainsComment == 1 || features.QuoteCount > 0)
+        {
+            var predictor = _services.GetRequiredService<PredictionEngine<SqlData, SqlPrediction>>();
+            var prediction = predictor.Predict(data);
+            
+            if(prediction.Prediction && prediction.Probability > 0.7){
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("SQL Injection detected by ML.");
+                return;
+            }
         }
 
         // Continue request pipeline
@@ -91,14 +103,14 @@ public class InjectionMiddleware
     }
 
     //Feature Extraction
-    private EventSecurityAPI.Models.SqlFeatures ExtractFeatures(string input)
+    private EventManagementApi.Security.Models.SqlFeatures ExtractFeatures(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
-            return new EventSecurityAPI.Models.SqlFeatures();
+            return new EventManagementApi.Security.Models.SqlFeatures();
 
         input = input.ToLower();
 
-        return new EventSecurityAPI.Models.SqlFeatures
+        return new EventManagementApi.Security.Models.SqlFeatures
         {
             ContainsOr = Regex.IsMatch(input, @"'\s*or") ? 1 : 0,
             ContainsUnion = input.Contains("union") ? 1 : 0,

@@ -11,12 +11,35 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
+using Microsoft.ML;
+using EventManagementApi.Security.Models;
+using EventManagementApi.Security.Middleware;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token. Example: Bearer eyJhbGciOiJIUzI1NiIs..."
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecuritySchemeReference("Bearer", document, null),
+            new List<string>()
+        }
+    });
+});
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCors(options =>
@@ -98,6 +121,27 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+builder.Services.AddSingleton<PredictionEngine<SqlData, SqlPrediction>>(serviceProvider =>
+{
+    var mlContext = new MLContext();
+
+    var trainData = new List<SqlData>
+    {
+        new SqlData { ContainsOr = 0, ContainsUnion = 0, ContainsComment = 0, QuoteCount = 0, QueryLength = 30, Label = false },
+        new SqlData { ContainsOr = 1, ContainsUnion = 0, ContainsComment = 1, QuoteCount = 2, QueryLength = 15, Label = true }
+    };
+
+    var data = mlContext.Data.LoadFromEnumerable(trainData);
+
+    var pipeline = mlContext.Transforms
+        .Concatenate("Features", "ContainsOr", "ContainsUnion", "ContainsComment", "QuoteCount", "QueryLength")
+        .Append(mlContext.BinaryClassification.Trainers.SdcaLogisticRegression());
+
+    var model = pipeline.Fit(data);
+
+    return mlContext.Model.CreatePredictionEngine<SqlData, SqlPrediction>(model);
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -169,6 +213,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseCors("LocalDev");
 app.UseAuthentication();
+
+app.UseMiddleware<InjectionMiddleware>();
 
 var validateSession = builder.Configuration.GetValue<bool>("Security:ValidateSession", true);
 if (validateSession)
